@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify, render_template
+from sklearn.calibration import CalibratedClassifierCV
 import pickle
+import numpy as np
 
 app = Flask(__name__)
 
@@ -17,7 +19,16 @@ def predict():
     text = data["text"]
     vec = vectorizer.transform([text])
     emotion = model.predict(vec)[0]
-    return jsonify({"text": text, "emotion": emotion})
+
+    # confidence scores via decision function
+    scores = model.decision_function(vec)[0]
+    scores = scores - scores.min()
+    total = scores.sum()
+    probs = (scores / total).tolist() if total > 0 else [1/len(scores)] * len(scores)
+    classes = model.classes_.tolist()
+    confidence = {c: round(p * 100, 1) for c, p in zip(classes, probs)}
+
+    return jsonify({"text": text, "emotion": emotion, "confidence": confidence})
 
 @app.route("/")
 def index():

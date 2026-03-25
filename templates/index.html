@@ -1,207 +1,373 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Emotion Detector</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
+    :root[data-theme="dark"] {
+      --bg: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      --card: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.12);
+      --text: #fff;
+      --subtext: rgba(255,255,255,0.45);
+      --input-bg: rgba(255,255,255,0.06);
+      --history-bg: rgba(255,255,255,0.05);
+      --tag-bg: rgba(255,255,255,0.1);
+    }
+    :root[data-theme="light"] {
+      --bg: linear-gradient(135deg, #e0e7ff, #f0f4ff, #dbeafe);
+      --card: rgba(255,255,255,0.85);
+      --border: rgba(0,0,0,0.1);
+      --text: #1e1b4b;
+      --subtext: rgba(0,0,0,0.45);
+      --input-bg: rgba(0,0,0,0.04);
+      --history-bg: rgba(0,0,0,0.03);
+      --tag-bg: rgba(0,0,0,0.07);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; transition: background 0.3s, color 0.3s; }
     body {
       min-height: 100vh;
-      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: var(--bg);
       font-family: 'Segoe UI', sans-serif;
-      color: #fff;
+      color: var(--text);
+      padding: 24px 16px;
     }
-
+    .topbar {
+      display: flex;
+      justify-content: flex-end;
+      max-width: 900px;
+      margin: 0 auto 16px;
+      gap: 10px;
+    }
+    .icon-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 14px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.85rem;
+      backdrop-filter: blur(10px);
+    }
+    .icon-btn:hover { opacity: 0.8; }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    @media(max-width: 680px) { .layout { grid-template-columns: 1fr; } }
     .card {
-      background: rgba(255,255,255,0.07);
+      background: var(--card);
       backdrop-filter: blur(16px);
-      border: 1px solid rgba(255,255,255,0.12);
+      border: 1px solid var(--border);
       border-radius: 24px;
-      padding: 48px 40px;
-      width: 100%;
-      max-width: 560px;
-      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+      padding: 28px 24px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
     }
-
+    .card.full { grid-column: 1 / -1; }
     h1 {
-      font-size: 2rem;
+      font-size: 1.8rem;
       font-weight: 700;
-      text-align: center;
-      margin-bottom: 8px;
       background: linear-gradient(90deg, #a78bfa, #60a5fa);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
     }
-
-    p.subtitle {
-      text-align: center;
-      color: rgba(255,255,255,0.45);
-      font-size: 0.9rem;
-      margin-bottom: 32px;
-    }
-
+    .subtitle { color: var(--subtext); font-size: 0.85rem; margin-bottom: 20px; }
     textarea {
       width: 100%;
-      height: 130px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.15);
+      height: 120px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 16px;
-      color: #fff;
-      font-size: 1rem;
+      padding: 14px;
+      color: var(--text);
+      font-size: 0.95rem;
       resize: none;
       outline: none;
-      transition: border 0.3s;
     }
-
-    textarea::placeholder { color: rgba(255,255,255,0.3); }
     textarea:focus { border-color: #a78bfa; }
-
-    button {
-      width: 100%;
-      margin-top: 16px;
-      padding: 14px;
+    textarea::placeholder { color: var(--subtext); }
+    .btn-row { display: flex; gap: 10px; margin-top: 12px; }
+    button.primary {
+      flex: 1;
+      padding: 12px;
       border: none;
-      border-radius: 14px;
+      border-radius: 12px;
       background: linear-gradient(90deg, #a78bfa, #60a5fa);
       color: #fff;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
     }
-
-    button:hover { opacity: 0.9; transform: translateY(-1px); }
-    button:active { transform: scale(0.98); }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    .result {
-      margin-top: 28px;
-      text-align: center;
-      display: none;
+    button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.secondary {
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 0.85rem;
+      cursor: pointer;
     }
-
-    .emoji {
-      font-size: 4rem;
-      animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    .emotion-label {
+    .result-box { text-align: center; display: none; margin-top: 16px; }
+    .emoji { font-size: 3.5rem; animation: pop 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
+    .emotion-label { font-size: 1.5rem; font-weight: 700; text-transform: capitalize; margin-top: 6px; }
+    .copy-btn {
       margin-top: 10px;
-      font-size: 1.6rem;
-      font-weight: 700;
-      text-transform: capitalize;
-      letter-spacing: 1px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--tag-bg);
+      color: var(--text);
+      font-size: 0.8rem;
+      cursor: pointer;
     }
-
-    .emotion-bar {
-      margin-top: 14px;
-      height: 6px;
-      border-radius: 99px;
-      background: rgba(255,255,255,0.1);
-      overflow: hidden;
+    .share-btn {
+      margin-top: 6px;
+      margin-left: 6px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: none;
+      background: linear-gradient(90deg,#a78bfa,#60a5fa);
+      color: #fff;
+      font-size: 0.8rem;
+      cursor: pointer;
     }
-
-    .emotion-bar-fill {
-      height: 100%;
-      border-radius: 99px;
-      width: 0%;
-      transition: width 0.8s ease;
+    /* Confidence bars */
+    .conf-title { font-size: 0.85rem; color: var(--subtext); margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .conf-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 0.82rem; }
+    .conf-name { width: 68px; text-transform: capitalize; color: var(--text); }
+    .conf-track { flex: 1; height: 8px; background: var(--input-bg); border-radius: 99px; overflow: hidden; }
+    .conf-fill { height: 100%; border-radius: 99px; transition: width 0.7s ease; }
+    .conf-pct { width: 38px; text-align: right; color: var(--subtext); font-size: 0.78rem; }
+    /* History */
+    .section-title { font-size: 0.85rem; color: var(--subtext); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .history-list { display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; }
+    .history-item {
+      background: var(--history-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
     }
-
-    .error {
-      margin-top: 16px;
-      color: #f87171;
-      text-align: center;
-      font-size: 0.9rem;
-      display: none;
-    }
-
-    @keyframes pop {
-      0% { transform: scale(0.5); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
+    .history-emoji { font-size: 1.4rem; }
+    .history-text { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .history-tag { padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; background: var(--tag-bg); text-transform: capitalize; }
+    .empty-state { color: var(--subtext); font-size: 0.85rem; text-align: center; padding: 20px 0; }
+    .error-msg { color: #f87171; font-size: 0.85rem; text-align: center; margin-top: 10px; display: none; }
+    @keyframes pop { 0%{transform:scale(0.5);opacity:0} 100%{transform:scale(1);opacity:1} }
   </style>
 </head>
 <body>
+
+<div class="topbar">
+  <button class="icon-btn" onclick="toggleTheme()">🌓 Toggle Theme</button>
+  <button class="icon-btn" onclick="clearHistory()">🗑 Clear History</button>
+</div>
+
+<div class="layout">
+
+  <!-- Input card -->
   <div class="card">
     <h1>Emotion Detector</h1>
     <p class="subtitle">Type anything and discover the emotion behind it</p>
-
     <textarea id="inputText" placeholder="e.g. I can't believe how amazing today was..."></textarea>
-    <button id="analyzeBtn" onclick="analyze()">Analyze Emotion</button>
+    <div class="btn-row">
+      <button class="primary" id="analyzeBtn" onclick="analyze()">Analyze Emotion</button>
+      <button class="secondary" onclick="document.getElementById('inputText').value=''">Clear</button>
+    </div>
+    <div class="error-msg" id="error">Something went wrong. Please try again.</div>
 
-    <div class="result" id="result">
+    <div class="result-box" id="result">
       <div class="emoji" id="emoji"></div>
       <div class="emotion-label" id="emotionLabel"></div>
-      <div class="emotion-bar"><div class="emotion-bar-fill" id="barFill"></div></div>
+      <div style="margin-top:8px;">
+        <button class="copy-btn" onclick="copyResult()">📋 Copy</button>
+        <button class="share-btn" onclick="shareResult()">🔗 Share</button>
+      </div>
     </div>
-
-    <div class="error" id="error">Something went wrong. Please try again.</div>
   </div>
 
-  <script>
-    const emotions = {
-      joy:      { emoji: "😄", color: "#facc15" },
-      sadness:  { emoji: "😢", color: "#60a5fa" },
-      anger:    { emoji: "😡", color: "#f87171" },
-      fear:     { emoji: "😨", color: "#c084fc" },
-      surprise: { emoji: "😲", color: "#fb923c" },
-      disgust:  { emoji: "🤢", color: "#4ade80" },
-      shame:    { emoji: "😳", color: "#f472b6" },
-      neutral:  { emoji: "😐", color: "#94a3b8" },
-    };
+  <!-- Confidence card -->
+  <div class="card" id="confCard" style="display:none">
+    <div class="conf-title">Confidence Scores</div>
+    <div id="confBars"></div>
+  </div>
 
-    async function analyze() {
-      const text = document.getElementById("inputText").value.trim();
-      if (!text) return;
+  <!-- History card -->
+  <div class="card">
+    <div class="section-title">History</div>
+    <div class="history-list" id="historyList">
+      <div class="empty-state" id="emptyState">No analyses yet</div>
+    </div>
+  </div>
 
-      const btn = document.getElementById("analyzeBtn");
-      const result = document.getElementById("result");
-      const error = document.getElementById("error");
+  <!-- Stats chart card -->
+  <div class="card">
+    <div class="section-title">Emotion Stats</div>
+    <canvas id="statsChart" height="200"></canvas>
+  </div>
 
-      btn.disabled = true;
-      btn.textContent = "Analyzing...";
-      result.style.display = "none";
-      error.style.display = "none";
+</div>
 
-      try {
-        const res = await fetch("/predict", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text })
-        });
+<script>
+const emotions = {
+  joy:      { emoji:"😄", color:"#facc15" },
+  sadness:  { emoji:"😢", color:"#60a5fa" },
+  anger:    { emoji:"😡", color:"#f87171" },
+  fear:     { emoji:"😨", color:"#c084fc" },
+  surprise: { emoji:"😲", color:"#fb923c" },
+  disgust:  { emoji:"🤢", color:"#4ade80" },
+  shame:    { emoji:"😳", color:"#f472b6" },
+  neutral:  { emoji:"😐", color:"#94a3b8" },
+};
 
-        const data = await res.json();
-        const emotion = data.emotion.toLowerCase();
-        const meta = emotions[emotion] || { emoji: "🤔", color: "#fff" };
+let history = JSON.parse(localStorage.getItem("emo_history") || "[]");
+let statsData = JSON.parse(localStorage.getItem("emo_stats") || "{}");
+let chart;
+let lastResult = null;
 
-        document.getElementById("emoji").textContent = meta.emoji;
-        document.getElementById("emotionLabel").textContent = emotion;
-        document.getElementById("emotionLabel").style.color = meta.color;
+function saveStorage() {
+  localStorage.setItem("emo_history", JSON.stringify(history));
+  localStorage.setItem("emo_stats", JSON.stringify(statsData));
+}
 
-        const fill = document.getElementById("barFill");
-        fill.style.background = meta.color;
-        fill.style.width = "0%";
-        result.style.display = "block";
-        setTimeout(() => fill.style.width = "85%", 50);
+async function analyze() {
+  const text = document.getElementById("inputText").value.trim();
+  if (!text) return;
+  const btn = document.getElementById("analyzeBtn");
+  btn.disabled = true; btn.textContent = "Analyzing...";
+  document.getElementById("error").style.display = "none";
+  document.getElementById("result").style.display = "none";
 
-      } catch (e) {
-        error.style.display = "block";
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Analyze Emotion";
-      }
+  try {
+    const res = await fetch("/predict", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({text})
+    });
+    const data = await res.json();
+    const emotion = data.emotion.toLowerCase();
+    const meta = emotions[emotion] || {emoji:"🤔", color:"#fff"};
+    lastResult = {text, emotion, meta};
+
+    // Result
+    document.getElementById("emoji").textContent = meta.emoji;
+    const lbl = document.getElementById("emotionLabel");
+    lbl.textContent = emotion;
+    lbl.style.color = meta.color;
+    document.getElementById("result").style.display = "block";
+
+    // Confidence bars
+    if (data.confidence) {
+      const sorted = Object.entries(data.confidence).sort((a,b) => b[1]-a[1]);
+      const confCard = document.getElementById("confCard");
+      const confBars = document.getElementById("confBars");
+      confBars.innerHTML = "";
+      sorted.forEach(([emo, pct]) => {
+        const m = emotions[emo] || {color:"#fff"};
+        confBars.innerHTML += `
+          <div class="conf-row">
+            <span class="conf-name">${emo}</span>
+            <div class="conf-track"><div class="conf-fill" id="cf-${emo}" style="width:0%;background:${m.color}"></div></div>
+            <span class="conf-pct">${pct}%</span>
+          </div>`;
+      });
+      confCard.style.display = "block";
+      setTimeout(() => sorted.forEach(([emo, pct]) => {
+        const el = document.getElementById("cf-"+emo);
+        if (el) el.style.width = pct + "%";
+      }), 50);
     }
 
-    document.getElementById("inputText").addEventListener("keydown", e => {
-      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); analyze(); }
-    });
-  </script>
+    // History
+    history.unshift({text, emotion, emoji: meta.emoji, time: new Date().toLocaleTimeString()});
+    if (history.length > 20) history.pop();
+
+    // Stats
+    statsData[emotion] = (statsData[emotion] || 0) + 1;
+    saveStorage();
+    renderHistory();
+    renderChart();
+
+  } catch(e) {
+    document.getElementById("error").style.display = "block";
+  } finally {
+    btn.disabled = false; btn.textContent = "Analyze Emotion";
+  }
+}
+
+function renderHistory() {
+  const list = document.getElementById("historyList");
+  const empty = document.getElementById("emptyState");
+  if (!history.length) { empty.style.display="block"; return; }
+  empty.style.display = "none";
+  list.innerHTML = history.map(h => `
+    <div class="history-item">
+      <span class="history-emoji">${h.emoji}</span>
+      <span class="history-text" title="${h.text}">${h.text}</span>
+      <span class="history-tag" style="color:${(emotions[h.emotion]||{color:'#fff'}).color}">${h.emotion}</span>
+    </div>`).join("");
+}
+
+function renderChart() {
+  const labels = Object.keys(statsData);
+  const values = Object.values(statsData);
+  const colors = labels.map(l => (emotions[l]||{color:"#94a3b8"}).color);
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById("statsChart"), {
+    type: "doughnut",
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }] },
+    options: {
+      plugins: { legend: { labels: { color: getComputedStyle(document.body).getPropertyValue("color") || "#fff", font: {size:12} } } },
+      cutout: "60%"
+    }
+  });
+}
+
+function copyResult() {
+  if (!lastResult) return;
+  navigator.clipboard.writeText(`"${lastResult.text}" → ${lastResult.meta.emoji} ${lastResult.emotion}`);
+  alert("Copied to clipboard!");
+}
+
+function shareResult() {
+  if (!lastResult) return;
+  const txt = `I just analyzed my emotion: "${lastResult.text}" → ${lastResult.meta.emoji} ${lastResult.emotion}`;
+  if (navigator.share) {
+    navigator.share({title:"Emotion Detector", text: txt, url: location.href});
+  } else {
+    navigator.clipboard.writeText(txt);
+    alert("Link copied to clipboard!");
+  }
+}
+
+function clearHistory() {
+  history = []; statsData = {}; saveStorage();
+  renderHistory();
+  if (chart) { chart.destroy(); chart = null; }
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  html.setAttribute("data-theme", html.getAttribute("data-theme") === "dark" ? "light" : "dark");
+}
+
+document.getElementById("inputText").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); analyze(); }
+});
+
+// Init
+renderHistory();
+if (Object.keys(statsData).length) renderChart();
+</script>
 </body>
 </html>
