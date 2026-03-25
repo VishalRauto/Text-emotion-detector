@@ -179,6 +179,30 @@
     .error-msg { color: #f87171; font-size: 0.83rem; text-align: center; margin-top: 10px; display: none; }
     @keyframes pop { 0%{transform:scale(0.5);opacity:0} 100%{transform:scale(1);opacity:1} }
     @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
+
+    /* Mental Health Alert */
+    .mh-alert {
+      display: none; margin-top: 16px;
+      background: linear-gradient(135deg, rgba(248,113,113,0.15), rgba(192,132,252,0.15));
+      border: 1px solid rgba(248,113,113,0.4);
+      border-radius: 16px; padding: 16px 18px;
+      animation: pop 0.4s ease;
+    }
+    .mh-alert-title { font-size: 0.95rem; font-weight: 700; color: #f87171; margin-bottom: 6px; }
+    .mh-alert-body { font-size: 0.82rem; color: var(--subtext); line-height: 1.6; }
+    .mh-tips { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .mh-tip {
+      background: var(--input-bg); border-radius: 10px;
+      padding: 8px 12px; font-size: 0.8rem; color: var(--text);
+      border-left: 3px solid #a78bfa;
+    }
+    .mh-streak { font-size: 0.78rem; color: var(--subtext); margin-top: 8px; }
+    .mh-ok {
+      display: none; margin-top: 16px;
+      background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.3);
+      border-radius: 16px; padding: 12px 16px; font-size: 0.82rem; color: #4ade80;
+      animation: pop 0.4s ease;
+    }
   </style>
 </head>
 <body>
@@ -244,6 +268,21 @@
     <div class="history-list" id="historyList">
       <div class="empty-state" id="emptyState">No analyses yet</div>
     </div>
+  </div>
+
+  <!-- Mental Health Check-in -->
+  <div class="card full">
+    <div class="section-title">🧠 Mental Health Check-in</div>
+    <p style="font-size:0.82rem;color:var(--subtext);margin-bottom:12px">
+      Tracks your emotion patterns and alerts you when prolonged negative emotions are detected.
+    </p>
+    <div class="mh-alert" id="mhAlert">
+      <div class="mh-alert-title" id="mhAlertTitle"></div>
+      <div class="mh-alert-body" id="mhAlertBody"></div>
+      <div class="mh-tips" id="mhTips"></div>
+      <div class="mh-streak" id="mhStreak"></div>
+    </div>
+    <div class="mh-ok" id="mhOk"></div>
   </div>
 
 </div>
@@ -347,7 +386,7 @@ async function analyze() {
     if (!heatmapData[today]) heatmapData[today] = [];
     heatmapData[today].push(emotion);
     save();
-    renderHistory(); renderChart(); renderHeatmap();
+    renderHistory(); renderChart(); renderHeatmap(); checkMentalHealth(emotion);
 
   } catch(e) {
     document.getElementById("error").style.display = "block";
@@ -484,9 +523,54 @@ function toggleTheme() {
   h.setAttribute("data-theme", h.getAttribute("data-theme")==="dark"?"light":"dark");
 }
 
+// ── Mental Health Check-in ────────────────────────────────────────────────────
+const negativeEmotions = new Set(["sadness","anger","fear","shame","disgust"]);
+const tips = {
+  sadness: ["Try journaling your thoughts for 5 minutes","Reach out to a friend or family member","Take a short walk outside — sunlight helps"],
+  anger:   ["Try box breathing: inhale 4s, hold 4s, exhale 4s","Step away from the situation for 10 minutes","Write down what triggered you, then tear it up"],
+  fear:    ["Ground yourself: name 5 things you can see right now","Remind yourself: most feared outcomes never happen","Talk to someone you trust about what's worrying you"],
+  shame:   ["Remember: everyone makes mistakes — it's human","Practice self-compassion: talk to yourself like a friend","Write one thing you're proud of about yourself today"],
+  disgust: ["Take a break from the source of frustration","Focus on something you can control right now","Try a 2-minute mindfulness breathing exercise"],
+};
+const resources = `<div style="margin-top:10px;font-size:0.78rem;color:var(--subtext)">
+  If you're struggling, please reach out:
+  <a href="https://www.crisistextline.org" target="_blank" style="color:#a78bfa">Crisis Text Line</a> ·
+  <a href="https://www.befrienders.org" target="_blank" style="color:#a78bfa">Befrienders Worldwide</a>
+</div>`;
+
+function checkMentalHealth(emotion) {
+  const recent = history.slice(0, 10).map(h => h.emotion);
+  const negStreak = [];
+  for (const e of recent) {
+    if (negativeEmotions.has(e)) negStreak.push(e);
+    else break;
+  }
+
+  const alert = document.getElementById("mhAlert");
+  const ok = document.getElementById("mhOk");
+  alert.style.display = "none";
+  ok.style.display = "none";
+
+  if (negStreak.length >= 3) {
+    const dominant = negStreak.sort((a,b) =>
+      negStreak.filter(v=>v===b).length - negStreak.filter(v=>v===a).length)[0];
+    const t = tips[dominant] || tips.sadness;
+    document.getElementById("mhAlertTitle").textContent = `⚠️ We've noticed ${negStreak.length} consecutive negative emotions`;
+    document.getElementById("mhAlertBody").textContent =
+      `Your recent entries show a pattern of ${dominant} and other negative emotions. It's okay to not be okay — here are some things that might help:`;
+    document.getElementById("mhTips").innerHTML = t.map(tip => `<div class="mh-tip">💡 ${tip}</div>`).join("") + resources;
+    document.getElementById("mhStreak").textContent = `Recent pattern: ${negStreak.map(e=>(emotions[e]||{emoji:"😶"}).emoji).join(" ")}`;
+    alert.style.display = "block";
+  } else if (history.length >= 3 && !negativeEmotions.has(emotion)) {
+    ok.style.display = "block";
+    ok.textContent = `✅ You're doing well! Your recent emotions look positive. Keep it up ${(emotions[emotion]||{emoji:"😊"}).emoji}`;
+  }
+}
+
 // Init
 renderHistory(); renderHeatmap();
 if (Object.keys(statsData).length) renderChart();
+checkMentalHealth("");
 </script>
 </body>
 </html>
