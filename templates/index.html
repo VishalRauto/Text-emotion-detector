@@ -7,7 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root[data-theme="dark"] {
-      --bg: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      --bg1: #0f0c29; --bg2: #302b63; --bg3: #24243e;
       --card: rgba(255,255,255,0.07);
       --border: rgba(255,255,255,0.12);
       --text: #fff;
@@ -17,7 +17,7 @@
       --tag-bg: rgba(255,255,255,0.1);
     }
     :root[data-theme="light"] {
-      --bg: linear-gradient(135deg, #e0e7ff, #f0f4ff, #dbeafe);
+      --bg1: #e0e7ff; --bg2: #f0f4ff; --bg3: #dbeafe;
       --card: rgba(255,255,255,0.85);
       --border: rgba(0,0,0,0.1);
       --text: #1e1b4b;
@@ -26,220 +26,276 @@
       --history-bg: rgba(0,0,0,0.03);
       --tag-bg: rgba(0,0,0,0.07);
     }
-    * { margin:0; padding:0; box-sizing:border-box; transition: background 0.3s, color 0.3s; }
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
       min-height: 100vh;
-      background: var(--bg);
       font-family: 'Segoe UI', sans-serif;
       color: var(--text);
       padding: 24px 16px;
+      transition: background 1s ease;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
     }
+    /* Animated bg blobs */
+    .blob {
+      position: fixed; border-radius: 50%; filter: blur(80px);
+      opacity: 0.18; pointer-events: none; z-index: 0;
+      transition: background 1.5s ease, transform 1.5s ease;
+    }
+    .blob1 { width:400px; height:400px; top:-100px; left:-100px; background:#a78bfa; }
+    .blob2 { width:350px; height:350px; bottom:-80px; right:-80px; background:#60a5fa; }
     .topbar {
-      display: flex;
-      justify-content: flex-end;
-      max-width: 900px;
-      margin: 0 auto 16px;
-      gap: 10px;
+      display: flex; justify-content: flex-end;
+      max-width: 960px; margin: 0 auto 16px; gap: 10px;
+      position: relative; z-index: 1;
     }
     .icon-btn {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px 14px;
-      color: var(--text);
-      cursor: pointer;
-      font-size: 0.85rem;
-      backdrop-filter: blur(10px);
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 8px 14px; color: var(--text);
+      cursor: pointer; font-size: 0.82rem; backdrop-filter: blur(10px);
     }
     .icon-btn:hover { opacity: 0.8; }
     .layout {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      max-width: 900px;
-      margin: 0 auto;
+      gap: 18px; max-width: 960px; margin: 0 auto;
+      position: relative; z-index: 1;
     }
-    @media(max-width: 680px) { .layout { grid-template-columns: 1fr; } }
+    @media(max-width:700px){ .layout{ grid-template-columns:1fr; } }
     .card {
-      background: var(--card);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 28px 24px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      background: var(--card); backdrop-filter: blur(16px);
+      border: 1px solid var(--border); border-radius: 22px;
+      padding: 26px 22px; box-shadow: 0 20px 50px rgba(0,0,0,0.25);
     }
     .card.full { grid-column: 1 / -1; }
     h1 {
-      font-size: 1.8rem;
-      font-weight: 700;
-      background: linear-gradient(90deg, #a78bfa, #60a5fa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-size: 1.75rem; font-weight: 700;
+      background: linear-gradient(90deg,#a78bfa,#60a5fa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       margin-bottom: 4px;
     }
-    .subtitle { color: var(--subtext); font-size: 0.85rem; margin-bottom: 20px; }
+    .subtitle { color: var(--subtext); font-size: 0.83rem; margin-bottom: 18px; }
+    .input-wrap { position: relative; }
     textarea {
-      width: 100%;
-      height: 120px;
-      background: var(--input-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
-      color: var(--text);
-      font-size: 0.95rem;
-      resize: none;
-      outline: none;
+      width: 100%; height: 115px;
+      background: var(--input-bg); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px 44px 14px 14px;
+      color: var(--text); font-size: 0.93rem; resize: none; outline: none;
+      transition: border 0.3s;
     }
     textarea:focus { border-color: #a78bfa; }
     textarea::placeholder { color: var(--subtext); }
-    .btn-row { display: flex; gap: 10px; margin-top: 12px; }
+    .mic-btn {
+      position: absolute; right: 12px; top: 12px;
+      background: none; border: none; font-size: 1.3rem;
+      cursor: pointer; opacity: 0.6; transition: opacity 0.2s;
+    }
+    .mic-btn:hover { opacity: 1; }
+    .mic-btn.recording { opacity: 1; animation: pulse 1s infinite; }
+    .live-badge {
+      display: inline-block; font-size: 0.7rem; padding: 2px 8px;
+      border-radius: 20px; background: rgba(167,139,250,0.2);
+      color: #a78bfa; border: 1px solid rgba(167,139,250,0.3);
+      margin-bottom: 8px; vertical-align: middle;
+    }
+    .char-count { font-size: 0.75rem; color: var(--subtext); text-align: right; margin-top: 4px; }
+    .btn-row { display: flex; gap: 10px; margin-top: 10px; }
     button.primary {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 12px;
-      background: linear-gradient(90deg, #a78bfa, #60a5fa);
-      color: #fff;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
+      flex:1; padding: 12px; border: none; border-radius: 12px;
+      background: linear-gradient(90deg,#a78bfa,#60a5fa);
+      color: #fff; font-size: 0.93rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
     }
-    button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    button.primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     button.secondary {
-      padding: 12px 16px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: var(--input-bg);
-      color: var(--text);
-      font-size: 0.85rem;
-      cursor: pointer;
+      padding: 12px 16px; border: 1px solid var(--border);
+      border-radius: 12px; background: var(--input-bg);
+      color: var(--text); font-size: 0.83rem; cursor: pointer;
     }
+    /* Result */
     .result-box { text-align: center; display: none; margin-top: 16px; }
-    .emoji { font-size: 3.5rem; animation: pop 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
-    .emotion-label { font-size: 1.5rem; font-weight: 700; text-transform: capitalize; margin-top: 6px; }
-    .copy-btn {
-      margin-top: 10px;
-      padding: 6px 16px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      background: var(--tag-bg);
-      color: var(--text);
-      font-size: 0.8rem;
-      cursor: pointer;
+    .emoji { font-size: 3.2rem; animation: pop 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
+    .emotion-label { font-size: 1.4rem; font-weight: 700; text-transform: capitalize; margin-top: 6px; }
+    .live-result {
+      margin-top: 10px; padding: 8px 14px; border-radius: 12px;
+      background: var(--input-bg); font-size: 0.82rem;
+      color: var(--subtext); display: none; text-align: center;
+    }
+    .action-btns { margin-top: 10px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .action-btn {
+      padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--tag-bg); color: var(--text); font-size: 0.78rem; cursor: pointer;
     }
     .share-btn {
-      margin-top: 6px;
-      margin-left: 6px;
-      padding: 6px 16px;
-      border-radius: 20px;
-      border: none;
+      padding: 6px 14px; border-radius: 20px; border: none;
       background: linear-gradient(90deg,#a78bfa,#60a5fa);
-      color: #fff;
-      font-size: 0.8rem;
-      cursor: pointer;
+      color: #fff; font-size: 0.78rem; cursor: pointer;
     }
-    /* Confidence bars */
-    .conf-title { font-size: 0.85rem; color: var(--subtext); margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-    .conf-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 0.82rem; }
-    .conf-name { width: 68px; text-transform: capitalize; color: var(--text); }
-    .conf-track { flex: 1; height: 8px; background: var(--input-bg); border-radius: 99px; overflow: hidden; }
+    /* Confidence */
+    .section-title { font-size: 0.8rem; color: var(--subtext); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .conf-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 0.8rem; }
+    .conf-name { width: 66px; text-transform: capitalize; }
+    .conf-track { flex:1; height: 7px; background: var(--input-bg); border-radius: 99px; overflow: hidden; }
     .conf-fill { height: 100%; border-radius: 99px; transition: width 0.7s ease; }
-    .conf-pct { width: 38px; text-align: right; color: var(--subtext); font-size: 0.78rem; }
-    /* History */
-    .section-title { font-size: 0.85rem; color: var(--subtext); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-    .history-list { display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; }
-    .history-item {
-      background: var(--history-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.85rem;
+    .conf-pct { width: 36px; text-align: right; color: var(--subtext); font-size: 0.75rem; }
+    /* Timeline */
+    .timeline { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; }
+    .tl-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: var(--history-bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 12px; font-size: 0.82rem;
     }
-    .history-emoji { font-size: 1.4rem; }
-    .history-text { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .history-tag { padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; background: var(--tag-bg); text-transform: capitalize; }
-    .empty-state { color: var(--subtext); font-size: 0.85rem; text-align: center; padding: 20px 0; }
-    .error-msg { color: #f87171; font-size: 0.85rem; text-align: center; margin-top: 10px; display: none; }
+    .tl-emoji { font-size: 1.3rem; flex-shrink: 0; }
+    .tl-text { flex:1; color: var(--text); }
+    .tl-tag { font-size: 0.72rem; text-transform: capitalize; padding: 2px 8px; border-radius: 20px; background: var(--tag-bg); white-space: nowrap; }
+    /* Heatmap */
+    .heatmap { display: flex; flex-wrap: wrap; gap: 4px; }
+    .hm-day {
+      width: 28px; height: 28px; border-radius: 6px;
+      background: var(--input-bg); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; cursor: default; position: relative;
+    }
+    .hm-day:hover .hm-tip {
+      display: block;
+    }
+    .hm-tip {
+      display: none; position: absolute; bottom: 34px; left: 50%;
+      transform: translateX(-50%); background: #1e1b4b; color: #fff;
+      font-size: 0.7rem; padding: 4px 8px; border-radius: 8px;
+      white-space: nowrap; z-index: 10; pointer-events: none;
+    }
+    /* History */
+    .history-list { display: flex; flex-direction: column; gap: 7px; max-height: 220px; overflow-y: auto; }
+    .history-item {
+      background: var(--history-bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 9px 12px;
+      display: flex; align-items: center; gap: 10px; font-size: 0.82rem;
+    }
+    .history-emoji { font-size: 1.3rem; }
+    .history-text { flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .history-tag { padding: 2px 9px; border-radius: 20px; font-size: 0.72rem; background: var(--tag-bg); text-transform: capitalize; }
+    .empty-state { color: var(--subtext); font-size: 0.83rem; text-align: center; padding: 18px 0; }
+    .error-msg { color: #f87171; font-size: 0.83rem; text-align: center; margin-top: 10px; display: none; }
     @keyframes pop { 0%{transform:scale(0.5);opacity:0} 100%{transform:scale(1);opacity:1} }
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
   </style>
 </head>
 <body>
+<div class="blob blob1" id="blob1"></div>
+<div class="blob blob2" id="blob2"></div>
 
 <div class="topbar">
-  <button class="icon-btn" onclick="toggleTheme()">🌓 Toggle Theme</button>
-  <button class="icon-btn" onclick="clearHistory()">🗑 Clear History</button>
+  <button class="icon-btn" onclick="toggleTheme()">🌓 Theme</button>
+  <button class="icon-btn" onclick="analyzeMulti()">📄 Analyze Paragraph</button>
+  <button class="icon-btn" onclick="clearAll()">🗑 Clear</button>
 </div>
 
 <div class="layout">
 
-  <!-- Input card -->
+  <!-- Input -->
   <div class="card">
     <h1>Emotion Detector</h1>
-    <p class="subtitle">Type anything and discover the emotion behind it</p>
-    <textarea id="inputText" placeholder="e.g. I can't believe how amazing today was..."></textarea>
+    <p class="subtitle">
+      <span class="live-badge">⚡ Live</span> Type, speak, or paste text to detect emotion
+    </p>
+    <div class="input-wrap">
+      <textarea id="inputText" placeholder="e.g. I can't believe how amazing today was..."></textarea>
+      <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Voice input">🎤</button>
+    </div>
+    <div class="char-count"><span id="charCount">0</span> characters</div>
+    <div class="live-result" id="liveResult"></div>
     <div class="btn-row">
-      <button class="primary" id="analyzeBtn" onclick="analyze()">Analyze Emotion</button>
-      <button class="secondary" onclick="document.getElementById('inputText').value=''">Clear</button>
+      <button class="primary" id="analyzeBtn" onclick="analyze()">Analyze</button>
+      <button class="secondary" onclick="document.getElementById('inputText').value='';updateChar()">Clear</button>
     </div>
     <div class="error-msg" id="error">Something went wrong. Please try again.</div>
-
     <div class="result-box" id="result">
       <div class="emoji" id="emoji"></div>
       <div class="emotion-label" id="emotionLabel"></div>
-      <div style="margin-top:8px;">
-        <button class="copy-btn" onclick="copyResult()">📋 Copy</button>
+      <div class="action-btns">
+        <button class="action-btn" onclick="copyResult()">📋 Copy</button>
+        <button class="action-btn" onclick="downloadResult()">⬇️ Download</button>
         <button class="share-btn" onclick="shareResult()">🔗 Share</button>
       </div>
     </div>
   </div>
 
-  <!-- Confidence card -->
+  <!-- Confidence -->
   <div class="card" id="confCard" style="display:none">
-    <div class="conf-title">Confidence Scores</div>
+    <div class="section-title">Confidence Scores</div>
     <div id="confBars"></div>
+    <canvas id="statsChart" height="160" style="margin-top:16px"></canvas>
   </div>
 
-  <!-- History card -->
+  <!-- Sentence Timeline -->
   <div class="card">
-    <div class="section-title">History</div>
-    <div class="history-list" id="historyList">
-      <div class="empty-state" id="emptyState">No analyses yet</div>
+    <div class="section-title">Sentence Timeline</div>
+    <div class="timeline" id="timeline">
+      <div class="empty-state">Analyze a paragraph to see sentence-by-sentence breakdown</div>
     </div>
   </div>
 
-  <!-- Stats chart card -->
+  <!-- History + Heatmap -->
   <div class="card">
-    <div class="section-title">Emotion Stats</div>
-    <canvas id="statsChart" height="200"></canvas>
+    <div class="section-title">Today's Emotion Heatmap</div>
+    <div class="heatmap" id="heatmap"></div>
+    <div class="section-title" style="margin-top:18px">History</div>
+    <div class="history-list" id="historyList">
+      <div class="empty-state" id="emptyState">No analyses yet</div>
+    </div>
   </div>
 
 </div>
 
 <script>
 const emotions = {
-  joy:      { emoji:"😄", color:"#facc15" },
-  sadness:  { emoji:"😢", color:"#60a5fa" },
-  anger:    { emoji:"😡", color:"#f87171" },
-  fear:     { emoji:"😨", color:"#c084fc" },
-  surprise: { emoji:"😲", color:"#fb923c" },
-  disgust:  { emoji:"🤢", color:"#4ade80" },
-  shame:    { emoji:"😳", color:"#f472b6" },
-  neutral:  { emoji:"😐", color:"#94a3b8" },
+  joy:      {emoji:"😄", color:"#facc15"},
+  sadness:  {emoji:"😢", color:"#60a5fa"},
+  anger:    {emoji:"😡", color:"#f87171"},
+  fear:     {emoji:"😨", color:"#c084fc"},
+  surprise: {emoji:"😲", color:"#fb923c"},
+  disgust:  {emoji:"🤢", color:"#4ade80"},
+  shame:    {emoji:"😳", color:"#f472b6"},
+  neutral:  {emoji:"😐", color:"#94a3b8"},
 };
 
-let history = JSON.parse(localStorage.getItem("emo_history") || "[]");
-let statsData = JSON.parse(localStorage.getItem("emo_stats") || "{}");
-let chart;
-let lastResult = null;
+let history = JSON.parse(localStorage.getItem("emo_history")||"[]");
+let statsData = JSON.parse(localStorage.getItem("emo_stats")||"{}");
+let heatmapData = JSON.parse(localStorage.getItem("emo_heatmap")||"{}");
+let chart, lastResult, debounceTimer, recognition, isRecording = false;
 
-function saveStorage() {
+function save() {
   localStorage.setItem("emo_history", JSON.stringify(history));
   localStorage.setItem("emo_stats", JSON.stringify(statsData));
+  localStorage.setItem("emo_heatmap", JSON.stringify(heatmapData));
 }
 
+// ── Live detection ────────────────────────────────────────────────────────────
+document.getElementById("inputText").addEventListener("input", () => {
+  updateChar();
+  clearTimeout(debounceTimer);
+  const text = document.getElementById("inputText").value.trim();
+  if (text.length < 10) { document.getElementById("liveResult").style.display="none"; return; }
+  debounceTimer = setTimeout(() => liveDetect(text), 600);
+});
+
+function updateChar() {
+  document.getElementById("charCount").textContent = document.getElementById("inputText").value.length;
+}
+
+async function liveDetect(text) {
+  try {
+    const res = await fetch("/predict", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text})});
+    const data = await res.json();
+    const m = emotions[data.emotion] || {emoji:"🤔", color:"#fff"};
+    const el = document.getElementById("liveResult");
+    el.style.display = "block";
+    el.innerHTML = `Live: ${m.emoji} <span style="color:${m.color};font-weight:600;text-transform:capitalize">${data.emotion}</span>`;
+  } catch(e) {}
+}
+
+// ── Main analyze ──────────────────────────────────────────────────────────────
 async function analyze() {
   const text = document.getElementById("inputText").value.trim();
   if (!text) return;
@@ -249,124 +305,187 @@ async function analyze() {
   document.getElementById("result").style.display = "none";
 
   try {
-    const res = await fetch("/predict", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({text})
-    });
+    const res = await fetch("/predict", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text})});
     const data = await res.json();
     const emotion = data.emotion.toLowerCase();
     const meta = emotions[emotion] || {emoji:"🤔", color:"#fff"};
     lastResult = {text, emotion, meta};
 
-    // Result
     document.getElementById("emoji").textContent = meta.emoji;
     const lbl = document.getElementById("emotionLabel");
-    lbl.textContent = emotion;
-    lbl.style.color = meta.color;
+    lbl.textContent = emotion; lbl.style.color = meta.color;
     document.getElementById("result").style.display = "block";
+
+    // Animated background blobs
+    document.getElementById("blob1").style.background = meta.color;
+    document.getElementById("blob2").style.background = meta.color;
 
     // Confidence bars
     if (data.confidence) {
-      const sorted = Object.entries(data.confidence).sort((a,b) => b[1]-a[1]);
-      const confCard = document.getElementById("confCard");
+      const sorted = Object.entries(data.confidence).sort((a,b)=>b[1]-a[1]);
       const confBars = document.getElementById("confBars");
       confBars.innerHTML = "";
       sorted.forEach(([emo, pct]) => {
-        const m = emotions[emo] || {color:"#fff"};
-        confBars.innerHTML += `
-          <div class="conf-row">
-            <span class="conf-name">${emo}</span>
-            <div class="conf-track"><div class="conf-fill" id="cf-${emo}" style="width:0%;background:${m.color}"></div></div>
-            <span class="conf-pct">${pct}%</span>
-          </div>`;
+        const m = emotions[emo]||{color:"#fff"};
+        confBars.innerHTML += `<div class="conf-row">
+          <span class="conf-name">${emo}</span>
+          <div class="conf-track"><div class="conf-fill" id="cf-${emo}" style="width:0%;background:${m.color}"></div></div>
+          <span class="conf-pct">${pct}%</span></div>`;
       });
-      confCard.style.display = "block";
-      setTimeout(() => sorted.forEach(([emo, pct]) => {
+      document.getElementById("confCard").style.display = "block";
+      setTimeout(() => sorted.forEach(([emo,pct]) => {
         const el = document.getElementById("cf-"+emo);
-        if (el) el.style.width = pct + "%";
+        if(el) el.style.width = pct+"%";
       }), 50);
     }
 
-    // History
-    history.unshift({text, emotion, emoji: meta.emoji, time: new Date().toLocaleTimeString()});
-    if (history.length > 20) history.pop();
-
-    // Stats
-    statsData[emotion] = (statsData[emotion] || 0) + 1;
-    saveStorage();
-    renderHistory();
-    renderChart();
+    // History + stats + heatmap
+    history.unshift({text, emotion, emoji:meta.emoji, time: new Date().toLocaleTimeString()});
+    if (history.length > 30) history.pop();
+    statsData[emotion] = (statsData[emotion]||0) + 1;
+    const today = new Date().toISOString().split("T")[0];
+    if (!heatmapData[today]) heatmapData[today] = [];
+    heatmapData[today].push(emotion);
+    save();
+    renderHistory(); renderChart(); renderHeatmap();
 
   } catch(e) {
     document.getElementById("error").style.display = "block";
   } finally {
-    btn.disabled = false; btn.textContent = "Analyze Emotion";
+    btn.disabled = false; btn.textContent = "Analyze";
   }
 }
 
+// ── Paragraph / multi-sentence ────────────────────────────────────────────────
+async function analyzeMulti() {
+  const text = document.getElementById("inputText").value.trim();
+  if (!text) return;
+  const sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
+  const tl = document.getElementById("timeline");
+  tl.innerHTML = "<div class='empty-state'>Analyzing...</div>";
+
+  const results = await Promise.all(sentences.map(s =>
+    fetch("/predict", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text: s.trim()})})
+    .then(r=>r.json()).catch(()=>null)
+  ));
+
+  tl.innerHTML = "";
+  results.forEach((data, i) => {
+    if (!data) return;
+    const m = emotions[data.emotion]||{emoji:"🤔",color:"#fff"};
+    tl.innerHTML += `<div class="tl-item">
+      <span class="tl-emoji">${m.emoji}</span>
+      <span class="tl-text">${sentences[i].trim()}</span>
+      <span class="tl-tag" style="color:${m.color}">${data.emotion}</span>
+    </div>`;
+  });
+}
+
+// ── Voice input ───────────────────────────────────────────────────────────────
+function toggleMic() {
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    alert("Voice input not supported in this browser. Try Chrome."); return;
+  }
+  if (isRecording) {
+    recognition.stop(); return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = "en-US"; recognition.interimResults = true;
+  recognition.onstart = () => { isRecording=true; document.getElementById("micBtn").classList.add("recording"); };
+  recognition.onresult = e => {
+    const transcript = Array.from(e.results).map(r=>r[0].transcript).join("");
+    document.getElementById("inputText").value = transcript;
+    updateChar();
+  };
+  recognition.onend = () => { isRecording=false; document.getElementById("micBtn").classList.remove("recording"); };
+  recognition.start();
+}
+
+// ── Heatmap ───────────────────────────────────────────────────────────────────
+function renderHeatmap() {
+  const hm = document.getElementById("heatmap");
+  hm.innerHTML = "";
+  const days = 28;
+  for (let i = days-1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const key = d.toISOString().split("T")[0];
+    const entries = heatmapData[key] || [];
+    const dominant = entries.length ? entries.sort((a,b)=>
+      entries.filter(v=>v===b).length - entries.filter(v=>v===a).length)[0] : null;
+    const m = dominant ? (emotions[dominant]||{emoji:"",color:"var(--input-bg)"}) : {emoji:"",color:"var(--input-bg)"};
+    const label = d.toLocaleDateString("en",{month:"short",day:"numeric"});
+    hm.innerHTML += `<div class="hm-day" style="background:${entries.length?m.color+"33":"var(--input-bg)"}; border-color:${entries.length?m.color:"var(--border)"}">
+      ${dominant ? m.emoji : ""}
+      <span class="hm-tip">${label}${dominant?" · "+dominant:""}</span>
+    </div>`;
+  }
+}
+
+// ── Chart ─────────────────────────────────────────────────────────────────────
+function renderChart() {
+  const labels = Object.keys(statsData);
+  const values = Object.values(statsData);
+  const colors = labels.map(l=>(emotions[l]||{color:"#94a3b8"}).color);
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById("statsChart"), {
+    type: "doughnut",
+    data: {labels, datasets:[{data:values, backgroundColor:colors, borderWidth:0}]},
+    options: {plugins:{legend:{labels:{color:"rgba(255,255,255,0.6)",font:{size:11}}}}, cutout:"60%"}
+  });
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
 function renderHistory() {
   const list = document.getElementById("historyList");
   const empty = document.getElementById("emptyState");
   if (!history.length) { empty.style.display="block"; return; }
   empty.style.display = "none";
-  list.innerHTML = history.map(h => `
+  list.innerHTML = history.map(h=>`
     <div class="history-item">
       <span class="history-emoji">${h.emoji}</span>
       <span class="history-text" title="${h.text}">${h.text}</span>
-      <span class="history-tag" style="color:${(emotions[h.emotion]||{color:'#fff'}).color}">${h.emotion}</span>
+      <span class="history-tag" style="color:${(emotions[h.emotion]||{color:"#fff"}).color}">${h.emotion}</span>
     </div>`).join("");
 }
 
-function renderChart() {
-  const labels = Object.keys(statsData);
-  const values = Object.values(statsData);
-  const colors = labels.map(l => (emotions[l]||{color:"#94a3b8"}).color);
-  if (chart) chart.destroy();
-  chart = new Chart(document.getElementById("statsChart"), {
-    type: "doughnut",
-    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }] },
-    options: {
-      plugins: { legend: { labels: { color: getComputedStyle(document.body).getPropertyValue("color") || "#fff", font: {size:12} } } },
-      cutout: "60%"
-    }
-  });
-}
-
+// ── Actions ───────────────────────────────────────────────────────────────────
 function copyResult() {
   if (!lastResult) return;
   navigator.clipboard.writeText(`"${lastResult.text}" → ${lastResult.meta.emoji} ${lastResult.emotion}`);
-  alert("Copied to clipboard!");
+  alert("Copied!");
+}
+
+function downloadResult() {
+  if (!lastResult) return;
+  const blob = new Blob([`Text: ${lastResult.text}\nEmotion: ${lastResult.emotion} ${lastResult.meta.emoji}\nDate: ${new Date().toLocaleString()}`], {type:"text/plain"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = "emotion-result.txt"; a.click();
 }
 
 function shareResult() {
   if (!lastResult) return;
-  const txt = `I just analyzed my emotion: "${lastResult.text}" → ${lastResult.meta.emoji} ${lastResult.emotion}`;
-  if (navigator.share) {
-    navigator.share({title:"Emotion Detector", text: txt, url: location.href});
-  } else {
-    navigator.clipboard.writeText(txt);
-    alert("Link copied to clipboard!");
-  }
+  const txt = `I detected emotion: "${lastResult.text}" → ${lastResult.meta.emoji} ${lastResult.emotion}`;
+  if (navigator.share) navigator.share({title:"Emotion Detector", text:txt, url:location.href});
+  else { navigator.clipboard.writeText(txt); alert("Copied to clipboard!"); }
 }
 
-function clearHistory() {
-  history = []; statsData = {}; saveStorage();
-  renderHistory();
-  if (chart) { chart.destroy(); chart = null; }
+function clearAll() {
+  history=[]; statsData={}; heatmapData={}; save();
+  renderHistory(); renderHeatmap();
+  if(chart){chart.destroy();chart=null;}
+  document.getElementById("confCard").style.display="none";
+  document.getElementById("result").style.display="none";
+  document.getElementById("timeline").innerHTML="<div class='empty-state'>Analyze a paragraph to see sentence-by-sentence breakdown</div>";
 }
 
 function toggleTheme() {
-  const html = document.documentElement;
-  html.setAttribute("data-theme", html.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  const h = document.documentElement;
+  h.setAttribute("data-theme", h.getAttribute("data-theme")==="dark"?"light":"dark");
 }
 
-document.getElementById("inputText").addEventListener("keydown", e => {
-  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); analyze(); }
-});
-
 // Init
-renderHistory();
+renderHistory(); renderHeatmap();
 if (Object.keys(statsData).length) renderChart();
 </script>
 </body>
