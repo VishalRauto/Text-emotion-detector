@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Emotion Detector</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', sans-serif;
+      color: #fff;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 24px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.subtitle {
+      text-align: center;
+      color: rgba(255,255,255,0.45);
+      font-size: 0.9rem;
+      margin-bottom: 32px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 130px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 14px;
+      padding: 16px;
+      color: #fff;
+      font-size: 1rem;
+      resize: none;
+      outline: none;
+      transition: border 0.3s;
+    }
+
+    textarea::placeholder { color: rgba(255,255,255,0.3); }
+    textarea:focus { border-color: #a78bfa; }
+
+    button {
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    button:hover { opacity: 0.9; transform: translateY(-1px); }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .result {
+      margin-top: 28px;
+      text-align: center;
+      display: none;
+    }
+
+    .emoji {
+      font-size: 4rem;
+      animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .emotion-label {
+      margin-top: 10px;
+      font-size: 1.6rem;
+      font-weight: 700;
+      text-transform: capitalize;
+      letter-spacing: 1px;
+    }
+
+    .emotion-bar {
+      margin-top: 14px;
+      height: 6px;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.1);
+      overflow: hidden;
+    }
+
+    .emotion-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      width: 0%;
+      transition: width 0.8s ease;
+    }
+
+    .error {
+      margin-top: 16px;
+      color: #f87171;
+      text-align: center;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Emotion Detector</h1>
+    <p class="subtitle">Type anything and discover the emotion behind it</p>
+
+    <textarea id="inputText" placeholder="e.g. I can't believe how amazing today was..."></textarea>
+    <button id="analyzeBtn" onclick="analyze()">Analyze Emotion</button>
+
+    <div class="result" id="result">
+      <div class="emoji" id="emoji"></div>
+      <div class="emotion-label" id="emotionLabel"></div>
+      <div class="emotion-bar"><div class="emotion-bar-fill" id="barFill"></div></div>
+    </div>
+
+    <div class="error" id="error">Something went wrong. Please try again.</div>
+  </div>
+
+  <script>
+    const emotions = {
+      joy:      { emoji: "😄", color: "#facc15" },
+      sadness:  { emoji: "😢", color: "#60a5fa" },
+      anger:    { emoji: "😡", color: "#f87171" },
+      fear:     { emoji: "😨", color: "#c084fc" },
+      surprise: { emoji: "😲", color: "#fb923c" },
+      disgust:  { emoji: "🤢", color: "#4ade80" },
+      shame:    { emoji: "😳", color: "#f472b6" },
+      neutral:  { emoji: "😐", color: "#94a3b8" },
+    };
+
+    async function analyze() {
+      const text = document.getElementById("inputText").value.trim();
+      if (!text) return;
+
+      const btn = document.getElementById("analyzeBtn");
+      const result = document.getElementById("result");
+      const error = document.getElementById("error");
+
+      btn.disabled = true;
+      btn.textContent = "Analyzing...";
+      result.style.display = "none";
+      error.style.display = "none";
+
+      try {
+        const res = await fetch("/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
+
+        const data = await res.json();
+        const emotion = data.emotion.toLowerCase();
+        const meta = emotions[emotion] || { emoji: "🤔", color: "#fff" };
+
+        document.getElementById("emoji").textContent = meta.emoji;
+        document.getElementById("emotionLabel").textContent = emotion;
+        document.getElementById("emotionLabel").style.color = meta.color;
+
+        const fill = document.getElementById("barFill");
+        fill.style.background = meta.color;
+        fill.style.width = "0%";
+        result.style.display = "block";
+        setTimeout(() => fill.style.width = "85%", 50);
+
+      } catch (e) {
+        error.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Analyze Emotion";
+      }
+    }
+
+    document.getElementById("inputText").addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); analyze(); }
+    });
+  </script>
+</body>
+</html>

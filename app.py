@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import pickle
 
 app = Flask(__name__)
@@ -18,6 +18,10 @@ def predict():
     vec = vectorizer.transform([text])
     emotion = model.predict(vec)[0]
     return jsonify({"text": text, "emotion": emotion})
+
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 @app.route("/health", methods=["GET"])
 def health():
