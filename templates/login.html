@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Emotion Detector — Login</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      min-height:100vh;
+      background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+      display:flex;align-items:center;justify-content:center;
+      font-family:'Segoe UI',sans-serif;color:#fff;
+    }
+    .blob{position:fixed;border-radius:50%;filter:blur(90px);opacity:.15;pointer-events:none;}
+    .b1{width:500px;height:500px;top:-150px;left:-150px;background:#a78bfa;}
+    .b2{width:400px;height:400px;bottom:-100px;right:-100px;background:#60a5fa;}
+    .card{
+      position:relative;z-index:1;
+      background:rgba(255,255,255,.07);backdrop-filter:blur(20px);
+      border:1px solid rgba(255,255,255,.12);border-radius:28px;
+      padding:48px 40px;width:100%;max-width:420px;
+      box-shadow:0 30px 80px rgba(0,0,0,.4);
+    }
+    .logo{text-align:center;margin-bottom:28px;}
+    .logo-icon{font-size:2.8rem;}
+    h1{
+      font-size:1.6rem;font-weight:700;text-align:center;margin-top:8px;
+      background:linear-gradient(90deg,#a78bfa,#60a5fa);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    }
+    .subtitle{text-align:center;color:rgba(255,255,255,.4);font-size:.85rem;margin-top:4px;margin-bottom:32px;}
+    .tabs{display:flex;background:rgba(255,255,255,.06);border-radius:12px;padding:4px;margin-bottom:28px;}
+    .tab{
+      flex:1;padding:10px;text-align:center;border-radius:9px;cursor:pointer;
+      font-size:.88rem;font-weight:600;color:rgba(255,255,255,.5);transition:.2s;
+    }
+    .tab.active{background:linear-gradient(90deg,#a78bfa,#60a5fa);color:#fff;}
+    .field{margin-bottom:16px;}
+    label{display:block;font-size:.8rem;color:rgba(255,255,255,.5);margin-bottom:6px;letter-spacing:.5px;}
+    input{
+      width:100%;padding:13px 16px;
+      background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+      border-radius:12px;color:#fff;font-size:.93rem;outline:none;transition:.2s;
+    }
+    input:focus{border-color:#a78bfa;}
+    input::placeholder{color:rgba(255,255,255,.25);}
+    .btn{
+      width:100%;margin-top:8px;padding:14px;border:none;border-radius:14px;
+      background:linear-gradient(90deg,#a78bfa,#60a5fa);
+      color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;
+      transition:opacity .2s,transform .1s;letter-spacing:.5px;
+    }
+    .btn:hover{opacity:.9;transform:translateY(-1px);}
+    .btn:active{transform:scale(.98);}
+    .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+    .error{
+      margin-top:14px;padding:10px 14px;border-radius:10px;
+      background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.3);
+      color:#f87171;font-size:.82rem;text-align:center;display:none;
+    }
+    .divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:rgba(255,255,255,.2);font-size:.8rem;}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.1);}
+    .strength{height:4px;border-radius:99px;margin-top:6px;background:rgba(255,255,255,.1);overflow:hidden;}
+    .strength-fill{height:100%;border-radius:99px;transition:width .3s,background .3s;width:0%;}
+  </style>
+</head>
+<body>
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">🧠</div>
+    <h1>Emotion Detector</h1>
+    <p class="subtitle">Understand your emotions with AI</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" id="loginTab" onclick="switchTab('login')">Sign In</div>
+    <div class="tab" id="registerTab" onclick="switchTab('register')">Sign Up</div>
+  </div>
+
+  <!-- Login form -->
+  <div id="loginForm">
+    <div class="field">
+      <label>USERNAME</label>
+      <input type="text" id="loginUser" placeholder="Enter your username"/>
+    </div>
+    <div class="field">
+      <label>PASSWORD</label>
+      <input type="password" id="loginPass" placeholder="Enter your password"/>
+    </div>
+    <button class="btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+  </div>
+
+  <!-- Register form -->
+  <div id="registerForm" style="display:none">
+    <div class="field">
+      <label>USERNAME</label>
+      <input type="text" id="regUser" placeholder="Choose a username"/>
+    </div>
+    <div class="field">
+      <label>PASSWORD</label>
+      <input type="password" id="regPass" placeholder="Choose a password" oninput="checkStrength(this.value)"/>
+      <div class="strength"><div class="strength-fill" id="strengthFill"></div></div>
+    </div>
+    <button class="btn" id="registerBtn" onclick="doRegister()">Create Account</button>
+  </div>
+
+  <div class="error" id="errorMsg"></div>
+</div>
+
+<script>
+function switchTab(tab) {
+  document.getElementById("loginForm").style.display    = tab==="login"    ? "block" : "none";
+  document.getElementById("registerForm").style.display = tab==="register" ? "block" : "none";
+  document.getElementById("loginTab").classList.toggle("active",    tab==="login");
+  document.getElementById("registerTab").classList.toggle("active", tab==="register");
+  document.getElementById("errorMsg").style.display = "none";
+}
+
+function showError(msg) {
+  const el = document.getElementById("errorMsg");
+  el.textContent = msg; el.style.display = "block";
+}
+
+async function doLogin() {
+  const username = document.getElementById("loginUser").value.trim();
+  const password = document.getElementById("loginPass").value;
+  if (!username || !password) return showError("Please fill in all fields");
+  const btn = document.getElementById("loginBtn");
+  btn.disabled = true; btn.textContent = "Signing in...";
+  const res = await fetch("/login", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({username, password})});
+  const data = await res.json();
+  if (data.ok) location.href = "/dashboard";
+  else { showError(data.error); btn.disabled=false; btn.textContent="Sign In"; }
+}
+
+async function doRegister() {
+  const username = document.getElementById("regUser").value.trim();
+  const password = document.getElementById("regPass").value;
+  if (!username || !password) return showError("Please fill in all fields");
+  if (password.length < 6) return showError("Password must be at least 6 characters");
+  const btn = document.getElementById("registerBtn");
+  btn.disabled = true; btn.textContent = "Creating account...";
+  const res = await fetch("/register", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({username, password})});
+  const data = await res.json();
+  if (data.ok) location.href = "/dashboard";
+  else { showError(data.error); btn.disabled=false; btn.textContent="Create Account"; }
+}
+
+function checkStrength(val) {
+  const fill = document.getElementById("strengthFill");
+  let score = 0;
+  if (val.length >= 6) score++;
+  if (val.length >= 10) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  const colors = ["#f87171","#fb923c","#facc15","#4ade80"];
+  fill.style.width = (score*25)+"%";
+  fill.style.background = colors[score-1] || "#f87171";
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    if (document.getElementById("loginForm").style.display !== "none") doLogin();
+    else doRegister();
+  }
+});
+</script>
+</body>
+</html>

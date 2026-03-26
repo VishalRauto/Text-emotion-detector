@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Emotion Detector — Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root[data-theme="dark"]{--bg:#0f0c29;--bg2:#1a1740;--card:rgba(255,255,255,.07);--border:rgba(255,255,255,.1);--text:#fff;--sub:rgba(255,255,255,.45);--input:rgba(255,255,255,.06);--sidebar:#13103a;}
+    :root[data-theme="light"]{--bg:#f0f4ff;--bg2:#e8eeff;--card:rgba(255,255,255,.9);--border:rgba(0,0,0,.08);--text:#1e1b4b;--sub:rgba(0,0,0,.45);--input:rgba(0,0,0,.04);--sidebar:#e0e7ff;}
+    *{margin:0;padding:0;box-sizing:border-box;transition:background .3s,color .3s;}
+    body{display:flex;min-height:100vh;background:var(--bg);font-family:'Segoe UI',sans-serif;color:var(--text);}
+    /* Sidebar */
+    .sidebar{width:240px;min-height:100vh;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 16px;flex-shrink:0;}
+    .logo{display:flex;align-items:center;gap:10px;padding:0 8px;margin-bottom:32px;}
+    .logo-icon{font-size:1.8rem;}
+    .logo-text{font-size:1.1rem;font-weight:700;background:linear-gradient(90deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;cursor:pointer;font-size:.88rem;color:var(--sub);margin-bottom:4px;transition:.2s;}
+    .nav-item:hover{background:var(--card);color:var(--text);}
+    .nav-item.active{background:linear-gradient(90deg,rgba(167,139,250,.2),rgba(96,165,250,.2));color:#a78bfa;font-weight:600;}
+    .nav-icon{font-size:1.1rem;width:22px;text-align:center;}
+    .sidebar-bottom{margin-top:auto;}
+    .user-chip{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid var(--border);}
+    .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#a78bfa,#60a5fa);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:#fff;flex-shrink:0;}
+    .user-name{font-size:.85rem;font-weight:600;}
+    .user-role{font-size:.72rem;color:var(--sub);}
+    /* Main */
+    .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:1px solid var(--border);background:var(--bg);}
+    .page-title{font-size:1.2rem;font-weight:700;}
+    .topbar-right{display:flex;gap:10px;align-items:center;}
+    .icon-btn{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 14px;color:var(--text);cursor:pointer;font-size:.82rem;}
+    .icon-btn:hover{opacity:.8;}
+    .content{flex:1;overflow-y:auto;padding:24px 28px;}
+    /* Pages */
+    .page{display:none;}
+    .page.active{display:block;}
+    /* Stats row */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;display:flex;align-items:center;gap:14px;}
+    .stat-icon{font-size:1.8rem;}
+    .stat-val{font-size:1.5rem;font-weight:700;}
+    .stat-label{font-size:.78rem;color:var(--sub);}
+    /* Grid */
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+    .grid3{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:18px;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;}
+    .card-title{font-size:.8rem;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;}
+    /* Analyze */
+    textarea{width:100%;height:110px;background:var(--input);border:1px solid var(--border);border-radius:14px;padding:14px;color:var(--text);font-size:.93rem;resize:none;outline:none;}
+    textarea:focus{border-color:#a78bfa;}
+    textarea::placeholder{color:var(--sub);}
+    .btn-row{display:flex;gap:10px;margin-top:12px;}
+    .btn-primary{flex:1;padding:12px;border:none;border-radius:12px;background:linear-gradient(90deg,#a78bfa,#60a5fa);color:#fff;font-size:.93rem;font-weight:600;cursor:pointer;}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+    .btn-sec{padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--input);color:var(--text);font-size:.83rem;cursor:pointer;}
+    /* Result */
+    .result-box{display:none;text-align:center;margin-top:18px;}
+    .big-emoji{font-size:3rem;animation:pop .4s cubic-bezier(.175,.885,.32,1.275);}
+    .emotion-name{font-size:1.4rem;font-weight:700;text-transform:capitalize;margin-top:6px;}
+    /* Confidence */
+    .conf-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:.8rem;}
+    .conf-name{width:68px;text-transform:capitalize;}
+    .conf-track{flex:1;height:7px;background:var(--input);border-radius:99px;overflow:hidden;}
+    .conf-fill{height:100%;border-radius:99px;transition:width .7s;}
+    .conf-pct{width:36px;text-align:right;color:var(--sub);font-size:.75rem;}
+    /* History table */
+    .hist-table{width:100%;border-collapse:collapse;font-size:.83rem;}
+    .hist-table th{text-align:left;padding:10px 12px;color:var(--sub);font-weight:600;border-bottom:1px solid var(--border);}
+    .hist-table td{padding:10px 12px;border-bottom:1px solid var(--border);}
+    .hist-table tr:last-child td{border-bottom:none;}
+    .tag{padding:3px 10px;border-radius:20px;font-size:.75rem;text-transform:capitalize;background:var(--input);}
+    /* Heatmap */
+    .heatmap{display:flex;flex-wrap:wrap;gap:4px;}
+    .hm-day{width:26px;height:26px;border-radius:6px;background:var(--input);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.7rem;position:relative;cursor:default;}
+    .hm-day:hover .hm-tip{display:block;}
+    .hm-tip{display:none;position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:#1e1b4b;color:#fff;font-size:.68rem;padding:3px 7px;border-radius:6px;white-space:nowrap;z-index:10;}
+    /* Live badge */
+    .live-badge{display:inline-block;font-size:.7rem;padding:2px 8px;border-radius:20px;background:rgba(167,139,250,.2);color:#a78bfa;border:1px solid rgba(167,139,250,.3);margin-bottom:8px;}
+    .live-result{margin-top:8px;padding:8px 14px;border-radius:10px;background:var(--input);font-size:.82rem;color:var(--sub);display:none;text-align:center;}
+    /* Mobile */
+    @media(max-width:768px){.sidebar{display:none;}.stats-row{grid-template-columns:1fr 1fr;}.grid2,.grid3{grid-template-columns:1fr;}}
+    @keyframes pop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  </style>
+</head>
+<body>
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="logo"><div class="logo-icon">🧠</div><div class="logo-text">EmotionAI</div></div>
+  <div class="nav-item active" onclick="showPage('analyze')"><span class="nav-icon">🔍</span> Analyze</div>
+  <div class="nav-item" onclick="showPage('dashboard')"><span class="nav-icon">📊</span> Dashboard</div>
+  <div class="nav-item" onclick="showPage('history')"><span class="nav-icon">📋</span> History</div>
+  <div class="nav-item" onclick="showPage('wellness')"><span class="nav-icon">🧘</span> Wellness</div>
+  <div class="sidebar-bottom">
+    <div class="nav-item" onclick="toggleTheme()"><span class="nav-icon">🌓</span> Toggle Theme</div>
+    <div class="user-chip" style="margin-top:8px">
+      <div class="avatar" id="avatarLetter">?</div>
+      <div><div class="user-name" id="sidebarUser">{{ username }}</div><div class="user-role">Free Plan</div></div>
+    </div>
+    <div class="nav-item" style="margin-top:8px" onclick="location.href='/logout'"><span class="nav-icon">🚪</span> Logout</div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="pageTitle">Analyze Text</div>
+    <div class="topbar-right">
+      <span id="topbarUser" style="font-size:.85rem;color:var(--sub)">Hi, {{ username }} 👋</span>
+      <button class="icon-btn" onclick="location.href='/logout'">Logout</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ANALYZE PAGE -->
+    <div class="page active" id="page-analyze">
+      <div class="grid3">
+        <div class="card">
+          <div class="card-title"><span class="live-badge">⚡ Live</span> Analyze Emotion</div>
+          <textarea id="inputText" placeholder="Type or paste text here... (press Enter to analyze)"></textarea>
+          <div class="live-result" id="liveResult"></div>
+          <div class="btn-row">
+            <button class="btn-primary" id="analyzeBtn" onclick="analyze()">Analyze</button>
+            <button class="btn-sec" onclick="toggleMic()" id="micBtn">🎤</button>
+            <button class="btn-sec" onclick="document.getElementById('inputText').value=''">Clear</button>
+          </div>
+          <div class="result-box" id="result">
+            <div class="big-emoji" id="emoji"></div>
+            <div class="emotion-name" id="emotionLabel"></div>
+            <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+              <button class="btn-sec" onclick="copyResult()">📋 Copy</button>
+              <button class="btn-sec" onclick="downloadResult()">⬇️ Download</button>
+              <button class="btn-sec" onclick="shareResult()">🔗 Share</button>
+            </div>
+          </div>
+        </div>
+        <div class="card" id="confCard" style="display:none">
+          <div class="card-title">Confidence Scores</div>
+          <div id="confBars"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📄 Paragraph Analyzer — sentence by sentence</div>
+        <div id="sentenceTimeline" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto">
+          <div style="color:var(--sub);font-size:.83rem;text-align:center;padding:16px">Analyze a paragraph to see breakdown</div>
+        </div>
+        <button class="btn-sec" style="margin-top:12px;width:100%" onclick="analyzeMulti()">Analyze Paragraph</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page" id="page-dashboard">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-icon">📝</div><div><div class="stat-val" id="statTotal">0</div><div class="stat-label">Total Analyses</div></div></div>
+        <div class="stat-card"><div class="stat-icon" id="statTopEmoji">😶</div><div><div class="stat-val" id="statTopEmotion">—</div><div class="stat-label">Top Emotion</div></div></div>
+        <div class="stat-card"><div class="stat-icon">📅</div><div><div class="stat-val" id="statToday">0</div><div class="stat-label">Today</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🔥</div><div><div class="stat-val" id="statStreak">0</div><div class="stat-label">Day Streak</div></div></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="card-title">Emotion Distribution</div><canvas id="pieChart" height="220"></canvas></div>
+        <div class="card"><div class="card-title">28-Day Heatmap</div><div class="heatmap" id="heatmap"></div></div>
+      </div>
+      <div class="card"><div class="card-title">Emotion Trend (last 20)</div><canvas id="lineChart" height="120"></canvas></div>
+    </div>
+
+    <!-- HISTORY PAGE -->
+    <div class="page" id="page-history">
+      <div class="card">
+        <div class="card-title">Analysis History</div>
+        <table class="hist-table">
+          <thead><tr><th>Emotion</th><th>Text</th><th>Time</th></tr></thead>
+          <tbody id="historyBody"><tr><td colspan="3" style="text-align:center;color:var(--sub);padding:20px">No history yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- WELLNESS PAGE -->
+    <div class="page" id="page-wellness">
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-title">🧠 Mental Health Check-in</div>
+        <div id="wellnessContent" style="color:var(--sub);font-size:.85rem">Analyze some text to see your wellness report.</div>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="card-title">Positive vs Negative Ratio</div><canvas id="wellnessChart" height="200"></canvas></div>
+        <div class="card">
+          <div class="card-title">Daily Tips</div>
+          <div id="dailyTips" style="display:flex;flex-direction:column;gap:10px"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const emotions = {
+  joy:      {emoji:"😄",color:"#facc15",positive:true},
+  sadness:  {emoji:"😢",color:"#60a5fa",positive:false},
+  anger:    {emoji:"😡",color:"#f87171",positive:false},
+  fear:     {emoji:"😨",color:"#c084fc",positive:false},
+  surprise: {emoji:"😲",color:"#fb923c",positive:true},
+  disgust:  {emoji:"🤢",color:"#4ade80",positive:false},
+  shame:    {emoji:"😳",color:"#f472b6",positive:false},
+  neutral:  {emoji:"😐",color:"#94a3b8",positive:true},
+};
+const tips = {
+  sadness:["Try journaling for 5 minutes","Reach out to a friend","Take a short walk outside"],
+  anger:  ["Try box breathing: 4s in, 4s hold, 4s out","Step away for 10 minutes","Write what triggered you"],
+  fear:   ["Name 5 things you can see right now","Most feared outcomes never happen","Talk to someone you trust"],
+  shame:  ["Everyone makes mistakes — it's human","Talk to yourself like a friend","Write one thing you're proud of"],
+  disgust:["Take a break from the source","Focus on what you can control","Try a 2-min mindfulness exercise"],
+};
+
+let serverHistory = [], pieChart, lineChart, wellnessChart, lastResult, debounceTimer, recognition, isRecording=false;
+const username = "{{ username }}";
+
+// Init
+document.getElementById("avatarLetter").textContent = username[0].toUpperCase();
+loadHistory();
+
+async function loadHistory() {
+  const res = await fetch("/history");
+  serverHistory = await res.json();
+  renderStats(); renderHeatmap(); renderCharts(); renderHistoryTable(); renderWellness();
+}
+
+function showPage(name) {
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
+  document.getElementById("page-"+name).classList.add("active");
+  event.currentTarget.classList.add("active");
+  const titles = {analyze:"Analyze Text",dashboard:"Dashboard",history:"History",wellness:"Wellness"};
+  document.getElementById("pageTitle").textContent = titles[name]||name;
+  if(name==="dashboard") renderCharts();
+  if(name==="wellness") renderWellness();
+}
+
+// ── Analyze ───────────────────────────────────────────────────────────────────
+document.getElementById("inputText").addEventListener("input", ()=>{
+  clearTimeout(debounceTimer);
+  const text = document.getElementById("inputText").value.trim();
+  if(text.length<10){document.getElementById("liveResult").style.display="none";return;}
+  debounceTimer = setTimeout(()=>liveDetect(text), 600);
+});
+
+async function liveDetect(text) {
+  try {
+    const res = await fetch("/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
+    const data = await res.json();
+    const m = emotions[data.emotion]||{emoji:"🤔",color:"#fff"};
+    const el = document.getElementById("liveResult");
+    el.style.display="block";
+    el.innerHTML=`Live: ${m.emoji} <span style="color:${m.color};font-weight:600;text-transform:capitalize">${data.emotion}</span>`;
+  } catch(e){}
+}
+
+async function analyze() {
+  const text = document.getElementById("inputText").value.trim();
+  if(!text) return;
+  const btn = document.getElementById("analyzeBtn");
+  btn.disabled=true; btn.textContent="Analyzing...";
+  document.getElementById("result").style.display="none";
+  try {
+    const res = await fetch("/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
+    const data = await res.json();
+    const emotion = data.emotion.toLowerCase();
+    const meta = emotions[emotion]||{emoji:"🤔",color:"#fff"};
+    lastResult = {text,emotion,meta};
+    document.getElementById("emoji").textContent = meta.emoji;
+    const lbl = document.getElementById("emotionLabel");
+    lbl.textContent=emotion; lbl.style.color=meta.color;
+    document.getElementById("result").style.display="block";
+    if(data.confidence) renderConfidence(data.confidence);
+    await loadHistory();
+  } catch(e){} finally {btn.disabled=false;btn.textContent="Analyze";}
+}
+
+function renderConfidence(conf) {
+  const sorted = Object.entries(conf).sort((a,b)=>b[1]-a[1]);
+  const bars = document.getElementById("confBars");
+  bars.innerHTML="";
+  sorted.forEach(([emo,pct])=>{
+    const m=emotions[emo]||{color:"#fff"};
+    bars.innerHTML+=`<div class="conf-row"><span class="conf-name">${emo}</span><div class="conf-track"><div class="conf-fill" id="cf-${emo}" style="width:0%;background:${m.color}"></div></div><span class="conf-pct">${pct}%</span></div>`;
+  });
+  document.getElementById("confCard").style.display="block";
+  setTimeout(()=>sorted.forEach(([emo,pct])=>{const el=document.getElementById("cf-"+emo);if(el)el.style.width=pct+"%";}),50);
+}
+
+async function analyzeMulti() {
+  const text = document.getElementById("inputText").value.trim();
+  if(!text) return;
+  const sentences = text.match(/[^.!?]+[.!?]*/g)||[text];
+  const tl = document.getElementById("sentenceTimeline");
+  tl.innerHTML="<div style='color:var(--sub);font-size:.83rem;text-align:center;padding:12px'>Analyzing...</div>";
+  const results = await Promise.all(sentences.map(s=>fetch("/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:s.trim()})}).then(r=>r.json()).catch(()=>null)));
+  tl.innerHTML="";
+  results.forEach((data,i)=>{
+    if(!data) return;
+    const m=emotions[data.emotion]||{emoji:"🤔",color:"#fff"};
+    tl.innerHTML+=`<div style="display:flex;align-items:flex-start;gap:10px;background:var(--input);border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-size:.82rem"><span style="font-size:1.3rem;flex-shrink:0">${m.emoji}</span><span style="flex:1;color:var(--text)">${sentences[i].trim()}</span><span class="tag" style="color:${m.color}">${data.emotion}</span></div>`;
+  });
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function renderStats() {
+  const total = serverHistory.length;
+  document.getElementById("statTotal").textContent = total;
+  const today = new Date().toISOString().split("T")[0];
+  const todayCount = serverHistory.filter(h=>h.time.startsWith(today)).length;
+  document.getElementById("statToday").textContent = todayCount;
+  if(total>0){
+    const freq={};
+    serverHistory.forEach(h=>{freq[h.emotion]=(freq[h.emotion]||0)+1;});
+    const top = Object.entries(freq).sort((a,b)=>b[1]-a[1])[0];
+    document.getElementById("statTopEmotion").textContent = top[0];
+    document.getElementById("statTopEmoji").textContent = (emotions[top[0]]||{emoji:"😶"}).emoji;
+  }
+  // streak
+  const days = new Set(serverHistory.map(h=>h.time.split(" ")[0]));
+  let streak=0, d=new Date();
+  while(days.has(d.toISOString().split("T")[0])){streak++;d.setDate(d.getDate()-1);}
+  document.getElementById("statStreak").textContent = streak;
+}
+
+function renderCharts() {
+  const freq={};
+  serverHistory.forEach(h=>{freq[h.emotion]=(freq[h.emotion]||0)+1;});
+  const labels=Object.keys(freq), vals=Object.values(freq), colors=labels.map(l=>(emotions[l]||{color:"#94a3b8"}).color);
+  if(pieChart) pieChart.destroy();
+  if(labels.length) pieChart=new Chart(document.getElementById("pieChart"),{type:"doughnut",data:{labels,datasets:[{data:vals,backgroundColor:colors,borderWidth:0}]},options:{plugins:{legend:{labels:{color:"rgba(255,255,255,.6)",font:{size:11}}}},cutout:"60%"}});
+
+  // Line chart
+  const last20 = serverHistory.slice(0,20).reverse();
+  const lineLabels = last20.map((_,i)=>i+1);
+  const lineData = last20.map(h=>{const m=emotions[h.emotion];return m?.positive?1:-1;});
+  if(lineChart) lineChart.destroy();
+  if(last20.length) lineChart=new Chart(document.getElementById("lineChart"),{type:"line",data:{labels:lineLabels,datasets:[{data:lineData,borderColor:"#a78bfa",backgroundColor:"rgba(167,139,250,.1)",fill:true,tension:.4,pointBackgroundColor:last20.map(h=>(emotions[h.emotion]||{color:"#fff"}).color),pointRadius:5}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v>0?"😊":"😔"},grid:{color:"rgba(255,255,255,.05)"}},x:{grid:{color:"rgba(255,255,255,.05)"}}}}});
+}
+
+function renderHeatmap() {
+  const hm = document.getElementById("heatmap");
+  hm.innerHTML="";
+  const byDay={};
+  serverHistory.forEach(h=>{const d=h.time.split(" ")[0];if(!byDay[d])byDay[d]=[];byDay[d].push(h.emotion);});
+  for(let i=27;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const key=d.toISOString().split("T")[0];
+    const entries=byDay[key]||[];
+    const dominant=entries.length?entries.sort((a,b)=>entries.filter(v=>v===b).length-entries.filter(v=>v===a).length)[0]:null;
+    const m=dominant?(emotions[dominant]||{emoji:"",color:"var(--input)"}):{emoji:"",color:"var(--input)"};
+    const label=d.toLocaleDateString("en",{month:"short",day:"numeric"});
+    hm.innerHTML+=`<div class="hm-day" style="background:${entries.length?m.color+"33":"var(--input)"};border-color:${entries.length?m.color:"var(--border)"}">${dominant?m.emoji:""}<span class="hm-tip">${label}${dominant?" · "+dominant:""}</span></div>`;
+  }
+}
+
+function renderHistoryTable() {
+  const tbody = document.getElementById("historyBody");
+  if(!serverHistory.length){tbody.innerHTML='<tr><td colspan="3" style="text-align:center;color:var(--sub);padding:20px">No history yet</td></tr>';return;}
+  tbody.innerHTML=serverHistory.map(h=>{
+    const m=emotions[h.emotion]||{emoji:"😶",color:"#fff"};
+    return `<tr><td><span class="tag" style="color:${m.color}">${m.emoji} ${h.emotion}</span></td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.text}</td><td style="color:var(--sub);white-space:nowrap">${h.time}</td></tr>`;
+  }).join("");
+}
+
+function renderWellness() {
+  const neg = serverHistory.filter(h=>!emotions[h.emotion]?.positive).length;
+  const pos = serverHistory.length - neg;
+  const recent = serverHistory.slice(0,10).map(h=>h.emotion);
+  const negStreak=[];
+  for(const e of recent){if(!emotions[e]?.positive)negStreak.push(e);else break;}
+  const wc = document.getElementById("wellnessContent");
+  if(!serverHistory.length){wc.innerHTML='<p>Analyze some text to see your wellness report.</p>';return;}
+  if(negStreak.length>=3){
+    const dom=negStreak.sort((a,b)=>negStreak.filter(v=>v===b).length-negStreak.filter(v=>v===a).length)[0];
+    wc.innerHTML=`<div style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:14px;padding:16px"><div style="color:#f87171;font-weight:700;margin-bottom:8px">⚠️ ${negStreak.length} consecutive negative emotions detected</div><div style="font-size:.83rem;color:var(--sub)">Your recent entries show a pattern of ${dom}. Here are some tips:</div><div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">${(tips[dom]||tips.sadness).map(t=>`<div style="background:var(--input);border-left:3px solid #a78bfa;border-radius:8px;padding:8px 12px;font-size:.8rem">💡 ${t}</div>`).join("")}</div><div style="margin-top:10px;font-size:.75rem;color:var(--sub)">If you're struggling: <a href="https://www.crisistextline.org" target="_blank" style="color:#a78bfa">Crisis Text Line</a></div></div>`;
+  } else {
+    wc.innerHTML=`<div style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:14px;padding:14px;color:#4ade80;font-size:.85rem">✅ You're doing well! Keep it up.</div>`;
+  }
+  if(wellnessChart) wellnessChart.destroy();
+  wellnessChart=new Chart(document.getElementById("wellnessChart"),{type:"doughnut",data:{labels:["Positive","Negative"],datasets:[{data:[pos,neg],backgroundColor:["#4ade80","#f87171"],borderWidth:0}]},options:{plugins:{legend:{labels:{color:"rgba(255,255,255,.6)"}}},cutout:"60%"}});
+  const dt=document.getElementById("dailyTips");
+  const allTips=[...tips.sadness,...tips.anger,...tips.fear].sort(()=>Math.random()-.5).slice(0,4);
+  dt.innerHTML=allTips.map(t=>`<div style="background:var(--input);border-left:3px solid #a78bfa;border-radius:10px;padding:10px 14px;font-size:.82rem">💡 ${t}</div>`).join("");
+}
+
+// ── Voice ─────────────────────────────────────────────────────────────────────
+function toggleMic(){
+  if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){alert("Voice input not supported. Try Chrome.");return;}
+  if(isRecording){recognition.stop();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SR();recognition.lang="en-US";recognition.interimResults=true;
+  recognition.onstart=()=>{isRecording=true;document.getElementById("micBtn").textContent="🔴";};
+  recognition.onresult=e=>{document.getElementById("inputText").value=Array.from(e.results).map(r=>r[0].transcript).join("");};
+  recognition.onend=()=>{isRecording=false;document.getElementById("micBtn").textContent="🎤";};
+  recognition.start();
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+function copyResult(){if(!lastResult)return;navigator.clipboard.writeText(`"${lastResult.text}" → ${lastResult.meta.emoji} ${lastResult.emotion}`);alert("Copied!");}
+function downloadResult(){if(!lastResult)return;const b=new Blob([`Text: ${lastResult.text}\nEmotion: ${lastResult.emotion} ${lastResult.meta.emoji}\nDate: ${new Date().toLocaleString()}`],{type:"text/plain"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="emotion-result.txt";a.click();}
+function shareResult(){if(!lastResult)return;const t=`Emotion detected: "${lastResult.text}" → ${lastResult.meta.emoji} ${lastResult.emotion}`;if(navigator.share)navigator.share({title:"EmotionAI",text:t,url:location.href});else{navigator.clipboard.writeText(t);alert("Copied!");}}
+function toggleTheme(){const h=document.documentElement;h.setAttribute("data-theme",h.getAttribute("data-theme")==="dark"?"light":"dark");}
+
+document.getElementById("inputText").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();analyze();}});
+</script>
+</body>
+</html>
