@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify, render_template
-from sklearn.calibration import CalibratedClassifierCV
 import pickle
 import numpy as np
 
@@ -8,7 +7,7 @@ app = Flask(__name__)
 with open("model.pkl", "rb") as f:
     bundle = pickle.load(f)
 
-model = bundle["model"]
+model      = bundle["model"]
 vectorizer = bundle["vectorizer"]
 
 @app.route("/predict", methods=["POST"])
@@ -17,17 +16,13 @@ def predict():
     if not data or "text" not in data:
         return jsonify({"error": "provide 'text' field"}), 400
     text = data["text"]
-    vec = vectorizer.transform([text])
+    vec     = vectorizer.transform([text])
     emotion = model.predict(vec)[0]
-
-    # confidence scores via decision function
+    # softmax over decision scores for confidence
     scores = model.decision_function(vec)[0]
-    scores = scores - scores.min()
-    total = scores.sum()
-    probs = (scores / total).tolist() if total > 0 else [1/len(scores)] * len(scores)
-    classes = model.classes_.tolist()
-    confidence = {c: round(p * 100, 1) for c, p in zip(classes, probs)}
-
+    e = np.exp(scores - scores.max())
+    probs = e / e.sum()
+    confidence = {c: round(float(p)*100, 1) for c, p in zip(model.classes_, probs)}
     return jsonify({"text": text, "emotion": emotion, "confidence": confidence})
 
 @app.route("/")
