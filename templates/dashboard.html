@@ -1,85 +1,83 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Emotion Detector — Dashboard</title>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EmotionAI Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root[data-theme="dark"]{--bg:#0f0c29;--bg2:#1a1740;--card:rgba(255,255,255,.07);--border:rgba(255,255,255,.1);--text:#fff;--sub:rgba(255,255,255,.45);--input:rgba(255,255,255,.06);--sidebar:#13103a;}
     :root[data-theme="light"]{--bg:#f0f4ff;--bg2:#e8eeff;--card:rgba(255,255,255,.9);--border:rgba(0,0,0,.08);--text:#1e1b4b;--sub:rgba(0,0,0,.45);--input:rgba(0,0,0,.04);--sidebar:#e0e7ff;}
     *{margin:0;padding:0;box-sizing:border-box;transition:background .3s,color .3s;}
     body{display:flex;min-height:100vh;background:var(--bg);font-family:'Segoe UI',sans-serif;color:var(--text);}
-    /* Sidebar */
-    .sidebar{width:240px;min-height:100vh;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 16px;flex-shrink:0;}
-    .logo{display:flex;align-items:center;gap:10px;padding:0 8px;margin-bottom:32px;}
-    .logo-icon{font-size:1.8rem;}
-    .logo-text{font-size:1.1rem;font-weight:700;background:linear-gradient(90deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-    .nav-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;cursor:pointer;font-size:.88rem;color:var(--sub);margin-bottom:4px;transition:.2s;}
+    .sidebar{width:230px;min-height:100vh;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 14px;flex-shrink:0;}
+    .logo{display:flex;align-items:center;gap:10px;padding:0 8px;margin-bottom:28px;}
+    .logo-icon{font-size:1.7rem;}.logo-text{font-size:1rem;font-weight:700;background:linear-gradient(90deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;cursor:pointer;font-size:.85rem;color:var(--sub);margin-bottom:3px;}
     .nav-item:hover{background:var(--card);color:var(--text);}
     .nav-item.active{background:linear-gradient(90deg,rgba(167,139,250,.2),rgba(96,165,250,.2));color:#a78bfa;font-weight:600;}
-    .nav-icon{font-size:1.1rem;width:22px;text-align:center;}
+    .nav-icon{font-size:1rem;width:20px;text-align:center;}
+    .nav-section{font-size:.68rem;color:var(--sub);letter-spacing:1px;text-transform:uppercase;padding:12px 12px 4px;margin-top:4px;}
     .sidebar-bottom{margin-top:auto;}
-    .user-chip{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid var(--border);}
-    .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#a78bfa,#60a5fa);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:#fff;flex-shrink:0;}
-    .user-name{font-size:.85rem;font-weight:600;}
-    .user-role{font-size:.72rem;color:var(--sub);}
-    /* Main */
+    .user-chip{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;background:var(--card);border:1px solid var(--border);}
+    .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#a78bfa,#60a5fa);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:#fff;flex-shrink:0;}
+    .user-name{font-size:.83rem;font-weight:600;}.user-role{font-size:.7rem;color:var(--sub);}
     .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-    .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:1px solid var(--border);background:var(--bg);}
-    .page-title{font-size:1.2rem;font-weight:700;}
-    .topbar-right{display:flex;gap:10px;align-items:center;}
-    .icon-btn{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 14px;color:var(--text);cursor:pointer;font-size:.82rem;}
-    .icon-btn:hover{opacity:.8;}
-    .content{flex:1;overflow-y:auto;padding:24px 28px;}
-    /* Pages */
-    .page{display:none;}
-    .page.active{display:block;}
-    /* Stats row */
-    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
-    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;display:flex;align-items:center;gap:14px;}
-    .stat-icon{font-size:1.8rem;}
-    .stat-val{font-size:1.5rem;font-weight:700;}
-    .stat-label{font-size:.78rem;color:var(--sub);}
-    /* Grid */
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
-    .grid3{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:18px;}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;}
-    .card-title{font-size:.8rem;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;}
-    /* Analyze */
-    textarea{width:100%;height:110px;background:var(--input);border:1px solid var(--border);border-radius:14px;padding:14px;color:var(--text);font-size:.93rem;resize:none;outline:none;}
-    textarea:focus{border-color:#a78bfa;}
-    textarea::placeholder{color:var(--sub);}
-    .btn-row{display:flex;gap:10px;margin-top:12px;}
-    .btn-primary{flex:1;padding:12px;border:none;border-radius:12px;background:linear-gradient(90deg,#a78bfa,#60a5fa);color:#fff;font-size:.93rem;font-weight:600;cursor:pointer;}
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);}
+    .page-title{font-size:1.1rem;font-weight:700;}
+    .topbar-right{display:flex;gap:8px;align-items:center;}
+    .icon-btn{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:7px 12px;color:var(--text);cursor:pointer;font-size:.8rem;}
+    .content{flex:1;overflow-y:auto;padding:20px 24px;}
+    .page{display:none;}.page.active{display:block;}
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;display:flex;align-items:center;gap:12px;}
+    .stat-icon{font-size:1.6rem;}.stat-val{font-size:1.4rem;font-weight:700;}.stat-label{font-size:.75rem;color:var(--sub);}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+    .grid3{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;}
+    .card-title{font-size:.78rem;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+    textarea,input[type=text]{width:100%;background:var(--input);border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:var(--text);font-size:.9rem;outline:none;font-family:inherit;}
+    textarea{resize:none;}
+    textarea:focus,input[type=text]:focus{border-color:#a78bfa;}
+    textarea::placeholder,input::placeholder{color:var(--sub);}
+    .btn-row{display:flex;gap:8px;margin-top:10px;}
+    .btn{padding:11px 18px;border:none;border-radius:11px;font-size:.88rem;font-weight:600;cursor:pointer;}
+    .btn-primary{background:linear-gradient(90deg,#a78bfa,#60a5fa);color:#fff;flex:1;}
     .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
-    .btn-sec{padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--input);color:var(--text);font-size:.83rem;cursor:pointer;}
-    /* Result */
-    .result-box{display:none;text-align:center;margin-top:18px;}
-    .big-emoji{font-size:3rem;animation:pop .4s cubic-bezier(.175,.885,.32,1.275);}
-    .emotion-name{font-size:1.4rem;font-weight:700;text-transform:capitalize;margin-top:6px;}
-    /* Confidence */
-    .conf-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:.8rem;}
-    .conf-name{width:68px;text-transform:capitalize;}
-    .conf-track{flex:1;height:7px;background:var(--input);border-radius:99px;overflow:hidden;}
+    .btn-sec{background:var(--input);border:1px solid var(--border);color:var(--text);}
+    .btn-danger{background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.3);color:#f87171;}
+    .result-box{display:none;text-align:center;margin-top:16px;}
+    .big-emoji{font-size:2.8rem;animation:pop .4s cubic-bezier(.175,.885,.32,1.275);}
+    .emotion-name{font-size:1.3rem;font-weight:700;text-transform:capitalize;margin-top:6px;}
+    .conf-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:.78rem;}
+    .conf-name{width:66px;text-transform:capitalize;}
+    .conf-track{flex:1;height:6px;background:var(--input);border-radius:99px;overflow:hidden;}
     .conf-fill{height:100%;border-radius:99px;transition:width .7s;}
-    .conf-pct{width:36px;text-align:right;color:var(--sub);font-size:.75rem;}
-    /* History table */
-    .hist-table{width:100%;border-collapse:collapse;font-size:.83rem;}
-    .hist-table th{text-align:left;padding:10px 12px;color:var(--sub);font-weight:600;border-bottom:1px solid var(--border);}
-    .hist-table td{padding:10px 12px;border-bottom:1px solid var(--border);}
+    .conf-pct{width:34px;text-align:right;color:var(--sub);font-size:.73rem;}
+    .hist-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+    .hist-table th{text-align:left;padding:9px 12px;color:var(--sub);font-weight:600;border-bottom:1px solid var(--border);}
+    .hist-table td{padding:9px 12px;border-bottom:1px solid var(--border);}
     .hist-table tr:last-child td{border-bottom:none;}
-    .tag{padding:3px 10px;border-radius:20px;font-size:.75rem;text-transform:capitalize;background:var(--input);}
-    /* Heatmap */
-    .heatmap{display:flex;flex-wrap:wrap;gap:4px;}
-    .hm-day{width:26px;height:26px;border-radius:6px;background:var(--input);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.7rem;position:relative;cursor:default;}
+    .tag{padding:2px 9px;border-radius:20px;font-size:.73rem;text-transform:capitalize;background:var(--input);}
+    .heatmap{display:flex;flex-wrap:wrap;gap:3px;}
+    .hm-day{width:24px;height:24px;border-radius:5px;background:var(--input);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.65rem;position:relative;cursor:default;}
     .hm-day:hover .hm-tip{display:block;}
-    .hm-tip{display:none;position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:#1e1b4b;color:#fff;font-size:.68rem;padding:3px 7px;border-radius:6px;white-space:nowrap;z-index:10;}
-    /* Live badge */
-    .live-badge{display:inline-block;font-size:.7rem;padding:2px 8px;border-radius:20px;background:rgba(167,139,250,.2);color:#a78bfa;border:1px solid rgba(167,139,250,.3);margin-bottom:8px;}
-    .live-result{margin-top:8px;padding:8px 14px;border-radius:10px;background:var(--input);font-size:.82rem;color:var(--sub);display:none;text-align:center;}
-    /* Mobile */
-    @media(max-width:768px){.sidebar{display:none;}.stats-row{grid-template-columns:1fr 1fr;}.grid2,.grid3{grid-template-columns:1fr;}}
+    .hm-tip{display:none;position:absolute;bottom:28px;left:50%;transform:translateX(-50%);background:#1e1b4b;color:#fff;font-size:.65rem;padding:3px 6px;border-radius:5px;white-space:nowrap;z-index:10;}
+    .live-result{margin-top:8px;padding:7px 12px;border-radius:9px;background:var(--input);font-size:.8rem;color:var(--sub);display:none;text-align:center;}
+    .live-badge{display:inline-block;font-size:.68rem;padding:2px 7px;border-radius:20px;background:rgba(167,139,250,.2);color:#a78bfa;border:1px solid rgba(167,139,250,.3);margin-bottom:6px;}
+    .suggestion-box{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);border-radius:12px;padding:14px;margin-top:12px;font-size:.83rem;line-height:1.6;}
+    .suggestion-item{padding:8px 12px;border-left:3px solid #a78bfa;border-radius:0 8px 8px 0;background:var(--input);margin-bottom:8px;}
+    .api-key-box{font-family:monospace;background:var(--input);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:.85rem;word-break:break-all;margin:10px 0;}
+    .leaderboard-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:var(--input);border:1px solid var(--border);margin-bottom:8px;}
+    .lb-rank{font-size:1.2rem;width:28px;text-align:center;}
+    .lb-name{flex:1;font-weight:600;font-size:.88rem;}
+    .lb-score{color:#facc15;font-weight:700;}
+    .journal-entry{background:var(--input);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;}
+    .journal-meta{font-size:.75rem;color:var(--sub);margin-top:6px;}
+    .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .compare-result{text-align:center;padding:16px;background:var(--input);border-radius:14px;border:1px solid var(--border);}
+    .upload-zone{border:2px dashed var(--border);border-radius:14px;padding:32px;text-align:center;cursor:pointer;color:var(--sub);font-size:.88rem;}
+    .upload-zone:hover{border-color:#a78bfa;color:#a78bfa;}
+    @media(max-width:768px){.sidebar{display:none;}.stats-row{grid-template-columns:1fr 1fr;}.grid2,.grid3{grid-template-columns:1fr;}.compare-grid{grid-template-columns:1fr;}}
     @keyframes pop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
   </style>
 </head>
@@ -87,17 +85,28 @@
 <!-- Sidebar -->
 <div class="sidebar">
   <div class="logo"><div class="logo-icon">🧠</div><div class="logo-text">EmotionAI</div></div>
-  <div class="nav-item active" onclick="showPage('analyze')"><span class="nav-icon">🔍</span> Analyze</div>
-  <div class="nav-item" onclick="showPage('dashboard')"><span class="nav-icon">📊</span> Dashboard</div>
-  <div class="nav-item" onclick="showPage('history')"><span class="nav-icon">📋</span> History</div>
-  <div class="nav-item" onclick="showPage('wellness')"><span class="nav-icon">🧘</span> Wellness</div>
+  <div class="nav-section">Main</div>
+  <div class="nav-item active" onclick="showPage('analyze',this)"><span class="nav-icon">🔍</span> Analyze</div>
+  <div class="nav-item" onclick="showPage('dashboard',this)"><span class="nav-icon">📊</span> Dashboard</div>
+  <div class="nav-item" onclick="showPage('history',this)"><span class="nav-icon">📋</span> History</div>
+  <div class="nav-section">Tools</div>
+  <div class="nav-item" onclick="showPage('rewrite',this)"><span class="nav-icon">✍️</span> Writing Assistant</div>
+  <div class="nav-item" onclick="showPage('compare',this)"><span class="nav-icon">⚖️</span> Compare Texts</div>
+  <div class="nav-item" onclick="showPage('bulk',this)"><span class="nav-icon">📂</span> Bulk Analyze</div>
+  <div class="nav-section">Personal</div>
+  <div class="nav-item" onclick="showPage('journal',this)"><span class="nav-icon">📓</span> Mood Journal</div>
+  <div class="nav-item" onclick="showPage('wellness',this)"><span class="nav-icon">🧘</span> Wellness</div>
+  <div class="nav-item" onclick="showPage('leaderboard',this)"><span class="nav-icon">🏆</span> Leaderboard</div>
+  <div class="nav-section">Developer</div>
+  <div class="nav-item" onclick="showPage('api',this)"><span class="nav-icon">🔑</span> API Access</div>
   <div class="sidebar-bottom">
-    <div class="nav-item" onclick="toggleTheme()"><span class="nav-icon">🌓</span> Toggle Theme</div>
+    <div class="nav-item" onclick="toggleTheme()"><span class="nav-icon">🌓</span> Theme</div>
+    <div class="nav-item" onclick="location.href='/export'"><span class="nav-icon">⬇️</span> Export CSV</div>
     <div class="user-chip" style="margin-top:8px">
       <div class="avatar" id="avatarLetter">?</div>
-      <div><div class="user-name" id="sidebarUser">{{ username }}</div><div class="user-role">Free Plan</div></div>
+      <div><div class="user-name">{{ username }}</div><div class="user-role">Free Plan</div></div>
     </div>
-    <div class="nav-item" style="margin-top:8px" onclick="location.href='/logout'"><span class="nav-icon">🚪</span> Logout</div>
+    <div class="nav-item" style="margin-top:6px" onclick="location.href='/logout'"><span class="nav-icon">🚪</span> Logout</div>
   </div>
 </div>
 
@@ -106,50 +115,48 @@
   <div class="topbar">
     <div class="page-title" id="pageTitle">Analyze Text</div>
     <div class="topbar-right">
-      <span id="topbarUser" style="font-size:.85rem;color:var(--sub)">Hi, {{ username }} 👋</span>
+      <span style="font-size:.82rem;color:var(--sub)">Hi, {{ username }} 👋</span>
+      <button class="icon-btn" onclick="location.href='/export'">⬇️ Export</button>
       <button class="icon-btn" onclick="location.href='/logout'">Logout</button>
     </div>
   </div>
-
   <div class="content">
 
-    <!-- ANALYZE PAGE -->
+    <!-- ANALYZE -->
     <div class="page active" id="page-analyze">
       <div class="grid3">
         <div class="card">
           <div class="card-title"><span class="live-badge">⚡ Live</span> Analyze Emotion</div>
-          <textarea id="inputText" placeholder="Type or paste text here... (press Enter to analyze)"></textarea>
+          <textarea id="inputText" rows="5" placeholder="Type or paste text... (Enter to analyze)"></textarea>
           <div class="live-result" id="liveResult"></div>
           <div class="btn-row">
-            <button class="btn-primary" id="analyzeBtn" onclick="analyze()">Analyze</button>
-            <button class="btn-sec" onclick="toggleMic()" id="micBtn">🎤</button>
-            <button class="btn-sec" onclick="document.getElementById('inputText').value=''">Clear</button>
+            <button class="btn btn-primary" id="analyzeBtn" onclick="analyze()">Analyze</button>
+            <button class="btn btn-sec" onclick="toggleMic()" id="micBtn">🎤</button>
+            <button class="btn btn-sec" onclick="document.getElementById('inputText').value=''">✕</button>
           </div>
           <div class="result-box" id="result">
             <div class="big-emoji" id="emoji"></div>
             <div class="emotion-name" id="emotionLabel"></div>
-            <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-              <button class="btn-sec" onclick="copyResult()">📋 Copy</button>
-              <button class="btn-sec" onclick="downloadResult()">⬇️ Download</button>
-              <button class="btn-sec" onclick="shareResult()">🔗 Share</button>
+            <div class="btn-row" style="justify-content:center;margin-top:10px">
+              <button class="btn btn-sec" onclick="copyResult()">📋</button>
+              <button class="btn btn-sec" onclick="downloadResult()">⬇️</button>
+              <button class="btn btn-sec" onclick="shareResult()">🔗</button>
             </div>
           </div>
         </div>
         <div class="card" id="confCard" style="display:none">
-          <div class="card-title">Confidence Scores</div>
+          <div class="card-title">Confidence</div>
           <div id="confBars"></div>
         </div>
       </div>
       <div class="card">
-        <div class="card-title">📄 Paragraph Analyzer — sentence by sentence</div>
-        <div id="sentenceTimeline" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto">
-          <div style="color:var(--sub);font-size:.83rem;text-align:center;padding:16px">Analyze a paragraph to see breakdown</div>
-        </div>
-        <button class="btn-sec" style="margin-top:12px;width:100%" onclick="analyzeMulti()">Analyze Paragraph</button>
+        <div class="card-title">📄 Sentence-by-Sentence Breakdown</div>
+        <div id="sentenceTimeline" style="display:flex;flex-direction:column;gap:7px;max-height:200px;overflow-y:auto"><div style="color:var(--sub);font-size:.82rem;text-align:center;padding:14px">Analyze a paragraph to see breakdown</div></div>
+        <button class="btn btn-sec" style="margin-top:10px;width:100%" onclick="analyzeMulti()">Analyze Paragraph</button>
       </div>
     </div>
 
-    <!-- DASHBOARD PAGE -->
+    <!-- DASHBOARD -->
     <div class="page" id="page-dashboard">
       <div class="stats-row">
         <div class="stat-card"><div class="stat-icon">📝</div><div><div class="stat-val" id="statTotal">0</div><div class="stat-label">Total Analyses</div></div></div>
@@ -161,13 +168,16 @@
         <div class="card"><div class="card-title">Emotion Distribution</div><canvas id="pieChart" height="220"></canvas></div>
         <div class="card"><div class="card-title">28-Day Heatmap</div><div class="heatmap" id="heatmap"></div></div>
       </div>
-      <div class="card"><div class="card-title">Emotion Trend (last 20)</div><canvas id="lineChart" height="120"></canvas></div>
+      <div class="card"><div class="card-title">Emotion Trend (last 20)</div><canvas id="lineChart" height="110"></canvas></div>
     </div>
 
-    <!-- HISTORY PAGE -->
+    <!-- HISTORY -->
     <div class="page" id="page-history">
       <div class="card">
-        <div class="card-title">Analysis History</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div class="card-title" style="margin:0">Analysis History</div>
+          <button class="btn btn-sec" onclick="location.href='/export'">⬇️ Export CSV</button>
+        </div>
         <table class="hist-table">
           <thead><tr><th>Emotion</th><th>Text</th><th>Time</th></tr></thead>
           <tbody id="historyBody"><tr><td colspan="3" style="text-align:center;color:var(--sub);padding:20px">No history yet</td></tr></tbody>
@@ -175,18 +185,123 @@
       </div>
     </div>
 
-    <!-- WELLNESS PAGE -->
-    <div class="page" id="page-wellness">
-      <div class="card" style="margin-bottom:18px">
-        <div class="card-title">🧠 Mental Health Check-in</div>
-        <div id="wellnessContent" style="color:var(--sub);font-size:.85rem">Analyze some text to see your wellness report.</div>
-      </div>
-      <div class="grid2">
-        <div class="card"><div class="card-title">Positive vs Negative Ratio</div><canvas id="wellnessChart" height="200"></canvas></div>
-        <div class="card">
-          <div class="card-title">Daily Tips</div>
-          <div id="dailyTips" style="display:flex;flex-direction:column;gap:10px"></div>
+    <!-- WRITING ASSISTANT -->
+    <div class="page" id="page-rewrite">
+      <div class="card">
+        <div class="card-title">✍️ Email & Writing Tone Checker</div>
+        <p style="font-size:.82rem;color:var(--sub);margin-bottom:14px">Paste your email or message — get tone analysis and suggestions to improve it before sending.</p>
+        <textarea id="rewriteText" rows="6" placeholder="Paste your email or message here..."></textarea>
+        <div class="btn-row"><button class="btn btn-primary" onclick="doRewrite()">Check Tone</button></div>
+        <div id="rewriteResult" style="display:none;margin-top:14px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <span id="rewriteEmoji" style="font-size:2rem"></span>
+            <div><div id="rewriteEmotion" style="font-weight:700;text-transform:capitalize;font-size:1.1rem"></div><div style="font-size:.78rem;color:var(--sub)">Detected tone</div></div>
+          </div>
+          <div class="card-title">Suggestions</div>
+          <div id="rewriteSuggestions"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- COMPARE -->
+    <div class="page" id="page-compare">
+      <div class="card">
+        <div class="card-title">⚖️ Compare Two Texts</div>
+        <div class="compare-grid">
+          <div><div style="font-size:.78rem;color:var(--sub);margin-bottom:6px">TEXT A</div><textarea id="compareText1" rows="5" placeholder="First text..."></textarea></div>
+          <div><div style="font-size:.78rem;color:var(--sub);margin-bottom:6px">TEXT B</div><textarea id="compareText2" rows="5" placeholder="Second text..."></textarea></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="doCompare()">Compare</button></div>
+        <div id="compareResult" style="display:none;margin-top:16px">
+          <div class="compare-grid">
+            <div class="compare-result"><div id="cmpEmoji1" style="font-size:2.5rem"></div><div id="cmpEmotion1" style="font-weight:700;text-transform:capitalize;margin-top:6px"></div><div style="font-size:.75rem;color:var(--sub)">Text A</div></div>
+            <div class="compare-result"><div id="cmpEmoji2" style="font-size:2.5rem"></div><div id="cmpEmotion2" style="font-weight:700;text-transform:capitalize;margin-top:6px"></div><div style="font-size:.75rem;color:var(--sub)">Text B</div></div>
+          </div>
+          <div id="cmpInsight" style="margin-top:12px;padding:12px 16px;background:var(--input);border-radius:12px;font-size:.83rem;color:var(--sub)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BULK -->
+    <div class="page" id="page-bulk">
+      <div class="card">
+        <div class="card-title">📂 Bulk CSV Analyzer</div>
+        <p style="font-size:.82rem;color:var(--sub);margin-bottom:16px">Upload a CSV with a <code>text</code> column. Get emotion predictions for every row.</p>
+        <div class="upload-zone" onclick="document.getElementById('csvFile').click()">
+          <div style="font-size:2rem;margin-bottom:8px">📁</div>
+          <div>Click to upload CSV file</div>
+          <div style="font-size:.75rem;margin-top:4px">First column should contain text</div>
+        </div>
+        <input type="file" id="csvFile" accept=".csv" style="display:none" onchange="doBulk(this)"/>
+        <div id="bulkResult" style="display:none;margin-top:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div class="card-title" style="margin:0">Results</div>
+            <button class="btn btn-sec" onclick="downloadBulk()">⬇️ Download</button>
+          </div>
+          <table class="hist-table"><thead><tr><th>#</th><th>Text</th><th>Emotion</th><th>Confidence</th></tr></thead><tbody id="bulkBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- JOURNAL -->
+    <div class="page" id="page-journal">
+      <div class="grid3">
+        <div class="card">
+          <div class="card-title">📓 New Journal Entry</div>
+          <textarea id="journalText" rows="5" placeholder="How are you feeling today? Write freely..."></textarea>
+          <div class="btn-row"><button class="btn btn-primary" onclick="saveJournal()">Save Entry</button></div>
+          <div id="journalResult" style="display:none;text-align:center;margin-top:14px">
+            <div id="journalEmoji" style="font-size:2.5rem"></div>
+            <div id="journalEmotion" style="font-weight:700;text-transform:capitalize;margin-top:6px"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Recent Entries</div>
+          <div id="journalList" style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto"><div style="color:var(--sub);font-size:.82rem;text-align:center;padding:14px">No entries yet</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WELLNESS -->
+    <div class="page" id="page-wellness">
+      <div class="card" style="margin-bottom:16px"><div class="card-title">🧠 Mental Health Check-in</div><div id="wellnessContent" style="color:var(--sub);font-size:.84rem">Analyze some text to see your wellness report.</div></div>
+      <div class="grid2">
+        <div class="card"><div class="card-title">Positive vs Negative</div><canvas id="wellnessChart" height="200"></canvas></div>
+        <div class="card"><div class="card-title">Daily Tips</div><div id="dailyTips" style="display:flex;flex-direction:column;gap:8px"></div></div>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div class="page" id="page-leaderboard">
+      <div class="card">
+        <div class="card-title">🏆 Joy Leaderboard — Today</div>
+        <p style="font-size:.82rem;color:var(--sub);margin-bottom:16px">Users with the most joyful analyses today.</p>
+        <div id="leaderboardList"><div style="color:var(--sub);font-size:.82rem;text-align:center;padding:20px">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- API -->
+    <div class="page" id="page-api">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">🔑 Your API Key</div>
+        <p style="font-size:.82rem;color:var(--sub);margin-bottom:12px">Use this key to call the API from your own apps.</p>
+        <div class="api-key-box" id="apiKeyBox">Loading...</div>
+        <div class="btn-row">
+          <button class="btn btn-sec" onclick="copyApiKey()">📋 Copy Key</button>
+          <button class="btn btn-danger" onclick="regenApiKey()">🔄 Regenerate</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">API Usage</div>
+        <pre style="background:var(--input);border-radius:12px;padding:16px;font-size:.8rem;overflow-x:auto;color:var(--text)">POST /predict
+Headers: X-API-Key: your_key_here
+Body: {"text": "I am so happy today"}
+
+Response:
+{
+  "emotion": "joy",
+  "confidence": {"joy": 82.3, "sadness": 4.1, ...}
+}</pre>
       </div>
     </div>
 
@@ -194,216 +309,200 @@
 </div>
 
 <script>
-const emotions = {
-  joy:      {emoji:"😄",color:"#facc15",positive:true},
-  sadness:  {emoji:"😢",color:"#60a5fa",positive:false},
-  anger:    {emoji:"😡",color:"#f87171",positive:false},
-  fear:     {emoji:"😨",color:"#c084fc",positive:false},
-  surprise: {emoji:"😲",color:"#fb923c",positive:true},
-  disgust:  {emoji:"🤢",color:"#4ade80",positive:false},
-  shame:    {emoji:"😳",color:"#f472b6",positive:false},
-  neutral:  {emoji:"😐",color:"#94a3b8",positive:true},
-};
-const tips = {
-  sadness:["Try journaling for 5 minutes","Reach out to a friend","Take a short walk outside"],
-  anger:  ["Try box breathing: 4s in, 4s hold, 4s out","Step away for 10 minutes","Write what triggered you"],
-  fear:   ["Name 5 things you can see right now","Most feared outcomes never happen","Talk to someone you trust"],
-  shame:  ["Everyone makes mistakes — it's human","Talk to yourself like a friend","Write one thing you're proud of"],
-  disgust:["Take a break from the source","Focus on what you can control","Try a 2-min mindfulness exercise"],
-};
-
-let serverHistory = [], pieChart, lineChart, wellnessChart, lastResult, debounceTimer, recognition, isRecording=false;
-const username = "{{ username }}";
-
-// Init
-document.getElementById("avatarLetter").textContent = username[0].toUpperCase();
+const emotions={joy:{emoji:"😄",color:"#facc15",positive:true},sadness:{emoji:"😢",color:"#60a5fa",positive:false},anger:{emoji:"😡",color:"#f87171",positive:false},fear:{emoji:"😨",color:"#c084fc",positive:false},surprise:{emoji:"😲",color:"#fb923c",positive:true},disgust:{emoji:"🤢",color:"#4ade80",positive:false},shame:{emoji:"😳",color:"#f472b6",positive:false},neutral:{emoji:"😐",color:"#94a3b8",positive:true}};
+const tips={sadness:["Try journaling for 5 minutes","Reach out to a friend","Take a short walk outside"],anger:["Box breathing: 4s in, 4s hold, 4s out","Step away for 10 minutes","Write what triggered you"],fear:["Name 5 things you can see right now","Talk to someone you trust","Most feared outcomes never happen"],shame:["Everyone makes mistakes","Talk to yourself like a friend","Write one thing you're proud of"],disgust:["Take a break from the source","Focus on what you can control","Try a 2-min mindfulness exercise"]};
+let serverHistory=[],pieChart,lineChart,wellnessChart,lastResult,debounceTimer,recognition,isRecording=false,bulkResults=[];
+const username="{{ username }}";
+document.getElementById("avatarLetter").textContent=username[0].toUpperCase();
 loadHistory();
 
-async function loadHistory() {
-  const res = await fetch("/history");
-  serverHistory = await res.json();
-  renderStats(); renderHeatmap(); renderCharts(); renderHistoryTable(); renderWellness();
+async function loadHistory(){
+  const res=await fetch("/history");
+  serverHistory=await res.json();
+  renderStats();renderHeatmap();renderHistoryTable();renderWellness();
 }
 
-function showPage(name) {
+function showPage(name,el){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
   document.getElementById("page-"+name).classList.add("active");
-  event.currentTarget.classList.add("active");
-  const titles = {analyze:"Analyze Text",dashboard:"Dashboard",history:"History",wellness:"Wellness"};
-  document.getElementById("pageTitle").textContent = titles[name]||name;
-  if(name==="dashboard") renderCharts();
-  if(name==="wellness") renderWellness();
+  if(el)el.classList.add("active");
+  const titles={analyze:"Analyze Text",dashboard:"Dashboard",history:"History",rewrite:"Writing Assistant",compare:"Compare Texts",bulk:"Bulk Analyzer",journal:"Mood Journal",wellness:"Wellness",leaderboard:"Leaderboard",api:"API Access"};
+  document.getElementById("pageTitle").textContent=titles[name]||name;
+  if(name==="dashboard"){renderCharts();}
+  if(name==="wellness"){renderWellness();}
+  if(name==="leaderboard"){loadLeaderboard();}
+  if(name==="api"){loadApiKey();}
+  if(name==="journal"){loadJournal();}
 }
 
 // ── Analyze ───────────────────────────────────────────────────────────────────
-document.getElementById("inputText").addEventListener("input", ()=>{
+document.getElementById("inputText").addEventListener("input",()=>{
   clearTimeout(debounceTimer);
-  const text = document.getElementById("inputText").value.trim();
+  const text=document.getElementById("inputText").value.trim();
   if(text.length<10){document.getElementById("liveResult").style.display="none";return;}
-  debounceTimer = setTimeout(()=>liveDetect(text), 600);
+  debounceTimer=setTimeout(()=>liveDetect(text),600);
 });
-
-async function liveDetect(text) {
-  try {
-    const res = await fetch("/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
-    const data = await res.json();
-    const m = emotions[data.emotion]||{emoji:"🤔",color:"#fff"};
-    const el = document.getElementById("liveResult");
-    el.style.display="block";
-    el.innerHTML=`Live: ${m.emoji} <span style="color:${m.color};font-weight:600;text-transform:capitalize">${data.emotion}</span>`;
-  } catch(e){}
+async function liveDetect(text){
+  try{const res=await fetch("/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});const data=await res.json();const m=emotions[data.emotion]||{emoji:"🤔",color:"#fff"};const el=document.getElementById("liveResult");el.style.display="block";el.innerHTML=`Live: ${m.emoji} <span style="color:${m.color};font-weight:600;text-transform:capitalize">${data.emotion}</span>`;}catch(e){}
 }
-
-async function analyze() {
-  const text = document.getElementById("inputText").value.trim();
-  if(!text) return;
-  const btn = document.getElementById("analyzeBtn");
-  btn.disabled=true; btn.textContent="Analyzing...";
+async function analyze(){
+  const text=document.getElementById("inputText").value.trim();if(!text)return;
+  const btn=document.getElementById("analyzeBtn");btn.disabled=true;btn.textContent="Analyzing...";
   document.getElementById("result").style.display="none";
-  try {
-    const res = await fetch("/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
-    const data = await res.json();
-    const emotion = data.emotion.toLowerCase();
-    const meta = emotions[emotion]||{emoji:"🤔",color:"#fff"};
-    lastResult = {text,emotion,meta};
-    document.getElementById("emoji").textContent = meta.emoji;
-    const lbl = document.getElementById("emotionLabel");
-    lbl.textContent=emotion; lbl.style.color=meta.color;
+  try{
+    const res=await fetch("/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
+    const data=await res.json();const emotion=data.emotion.toLowerCase();const meta=emotions[emotion]||{emoji:"🤔",color:"#fff"};
+    lastResult={text,emotion,meta};
+    document.getElementById("emoji").textContent=meta.emoji;
+    const lbl=document.getElementById("emotionLabel");lbl.textContent=emotion;lbl.style.color=meta.color;
     document.getElementById("result").style.display="block";
-    if(data.confidence) renderConfidence(data.confidence);
+    if(data.confidence)renderConfidence(data.confidence);
     await loadHistory();
-  } catch(e){} finally {btn.disabled=false;btn.textContent="Analyze";}
+  }catch(e){}finally{btn.disabled=false;btn.textContent="Analyze";}
 }
-
-function renderConfidence(conf) {
-  const sorted = Object.entries(conf).sort((a,b)=>b[1]-a[1]);
-  const bars = document.getElementById("confBars");
-  bars.innerHTML="";
-  sorted.forEach(([emo,pct])=>{
-    const m=emotions[emo]||{color:"#fff"};
-    bars.innerHTML+=`<div class="conf-row"><span class="conf-name">${emo}</span><div class="conf-track"><div class="conf-fill" id="cf-${emo}" style="width:0%;background:${m.color}"></div></div><span class="conf-pct">${pct}%</span></div>`;
-  });
+function renderConfidence(conf){
+  const sorted=Object.entries(conf).sort((a,b)=>b[1]-a[1]);
+  const bars=document.getElementById("confBars");bars.innerHTML="";
+  sorted.forEach(([emo,pct])=>{const m=emotions[emo]||{color:"#fff"};bars.innerHTML+=`<div class="conf-row"><span class="conf-name">${emo}</span><div class="conf-track"><div class="conf-fill" id="cf-${emo}" style="width:0%;background:${m.color}"></div></div><span class="conf-pct">${pct}%</span></div>`;});
   document.getElementById("confCard").style.display="block";
   setTimeout(()=>sorted.forEach(([emo,pct])=>{const el=document.getElementById("cf-"+emo);if(el)el.style.width=pct+"%";}),50);
 }
-
-async function analyzeMulti() {
-  const text = document.getElementById("inputText").value.trim();
-  if(!text) return;
-  const sentences = text.match(/[^.!?]+[.!?]*/g)||[text];
-  const tl = document.getElementById("sentenceTimeline");
-  tl.innerHTML="<div style='color:var(--sub);font-size:.83rem;text-align:center;padding:12px'>Analyzing...</div>";
-  const results = await Promise.all(sentences.map(s=>fetch("/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:s.trim()})}).then(r=>r.json()).catch(()=>null)));
+async function analyzeMulti(){
+  const text=document.getElementById("inputText").value.trim();if(!text)return;
+  const sentences=text.match(/[^.!?]+[.!?]*/g)||[text];
+  const tl=document.getElementById("sentenceTimeline");tl.innerHTML="<div style='color:var(--sub);font-size:.82rem;text-align:center;padding:10px'>Analyzing...</div>";
+  const results=await Promise.all(sentences.map(s=>fetch("/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:s.trim()})}).then(r=>r.json()).catch(()=>null)));
   tl.innerHTML="";
-  results.forEach((data,i)=>{
-    if(!data) return;
-    const m=emotions[data.emotion]||{emoji:"🤔",color:"#fff"};
-    tl.innerHTML+=`<div style="display:flex;align-items:flex-start;gap:10px;background:var(--input);border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-size:.82rem"><span style="font-size:1.3rem;flex-shrink:0">${m.emoji}</span><span style="flex:1;color:var(--text)">${sentences[i].trim()}</span><span class="tag" style="color:${m.color}">${data.emotion}</span></div>`;
-  });
+  results.forEach((data,i)=>{if(!data)return;const m=emotions[data.emotion]||{emoji:"🤔",color:"#fff"};tl.innerHTML+=`<div style="display:flex;align-items:flex-start;gap:8px;background:var(--input);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:.8rem"><span style="font-size:1.2rem;flex-shrink:0">${m.emoji}</span><span style="flex:1">${sentences[i].trim()}</span><span class="tag" style="color:${m.color}">${data.emotion}</span></div>`;});
 }
 
-// ── Stats ─────────────────────────────────────────────────────────────────────
-function renderStats() {
-  const total = serverHistory.length;
-  document.getElementById("statTotal").textContent = total;
-  const today = new Date().toISOString().split("T")[0];
-  const todayCount = serverHistory.filter(h=>h.time.startsWith(today)).length;
-  document.getElementById("statToday").textContent = todayCount;
-  if(total>0){
-    const freq={};
-    serverHistory.forEach(h=>{freq[h.emotion]=(freq[h.emotion]||0)+1;});
-    const top = Object.entries(freq).sort((a,b)=>b[1]-a[1])[0];
-    document.getElementById("statTopEmotion").textContent = top[0];
-    document.getElementById("statTopEmoji").textContent = (emotions[top[0]]||{emoji:"😶"}).emoji;
-  }
-  // streak
-  const days = new Set(serverHistory.map(h=>h.time.split(" ")[0]));
-  let streak=0, d=new Date();
-  while(days.has(d.toISOString().split("T")[0])){streak++;d.setDate(d.getDate()-1);}
-  document.getElementById("statStreak").textContent = streak;
+// ── Stats & Charts ────────────────────────────────────────────────────────────
+function renderStats(){
+  document.getElementById("statTotal").textContent=serverHistory.length;
+  const today=new Date().toISOString().split("T")[0];
+  document.getElementById("statToday").textContent=serverHistory.filter(h=>h.time.startsWith(today)).length;
+  if(serverHistory.length){const freq={};serverHistory.forEach(h=>{freq[h.emotion]=(freq[h.emotion]||0)+1;});const top=Object.entries(freq).sort((a,b)=>b[1]-a[1])[0];document.getElementById("statTopEmotion").textContent=top[0];document.getElementById("statTopEmoji").textContent=(emotions[top[0]]||{emoji:"😶"}).emoji;}
+  const days=new Set(serverHistory.map(h=>h.time.split(" ")[0]));let streak=0,d=new Date();while(days.has(d.toISOString().split("T")[0])){streak++;d.setDate(d.getDate()-1);}document.getElementById("statStreak").textContent=streak;
 }
-
-function renderCharts() {
-  const freq={};
-  serverHistory.forEach(h=>{freq[h.emotion]=(freq[h.emotion]||0)+1;});
-  const labels=Object.keys(freq), vals=Object.values(freq), colors=labels.map(l=>(emotions[l]||{color:"#94a3b8"}).color);
-  if(pieChart) pieChart.destroy();
-  if(labels.length) pieChart=new Chart(document.getElementById("pieChart"),{type:"doughnut",data:{labels,datasets:[{data:vals,backgroundColor:colors,borderWidth:0}]},options:{plugins:{legend:{labels:{color:"rgba(255,255,255,.6)",font:{size:11}}}},cutout:"60%"}});
-
-  // Line chart
-  const last20 = serverHistory.slice(0,20).reverse();
-  const lineLabels = last20.map((_,i)=>i+1);
-  const lineData = last20.map(h=>{const m=emotions[h.emotion];return m?.positive?1:-1;});
-  if(lineChart) lineChart.destroy();
-  if(last20.length) lineChart=new Chart(document.getElementById("lineChart"),{type:"line",data:{labels:lineLabels,datasets:[{data:lineData,borderColor:"#a78bfa",backgroundColor:"rgba(167,139,250,.1)",fill:true,tension:.4,pointBackgroundColor:last20.map(h=>(emotions[h.emotion]||{color:"#fff"}).color),pointRadius:5}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v>0?"😊":"😔"},grid:{color:"rgba(255,255,255,.05)"}},x:{grid:{color:"rgba(255,255,255,.05)"}}}}});
+function renderCharts(){
+  const freq={};serverHistory.forEach(h=>{freq[h.emotion]=(freq[h.emotion]||0)+1;});
+  const labels=Object.keys(freq),vals=Object.values(freq),colors=labels.map(l=>(emotions[l]||{color:"#94a3b8"}).color);
+  if(pieChart)pieChart.destroy();
+  if(labels.length)pieChart=new Chart(document.getElementById("pieChart"),{type:"doughnut",data:{labels,datasets:[{data:vals,backgroundColor:colors,borderWidth:0}]},options:{plugins:{legend:{labels:{color:"rgba(255,255,255,.6)",font:{size:11}}}},cutout:"60%"}});
+  const last20=serverHistory.slice(0,20).reverse();
+  if(lineChart)lineChart.destroy();
+  if(last20.length)lineChart=new Chart(document.getElementById("lineChart"),{type:"line",data:{labels:last20.map((_,i)=>i+1),datasets:[{data:last20.map(h=>emotions[h.emotion]?.positive?1:-1),borderColor:"#a78bfa",backgroundColor:"rgba(167,139,250,.1)",fill:true,tension:.4,pointBackgroundColor:last20.map(h=>(emotions[h.emotion]||{color:"#fff"}).color),pointRadius:5}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v>0?"😊":"😔"},grid:{color:"rgba(255,255,255,.05)"}},x:{grid:{color:"rgba(255,255,255,.05)"}}}}});
 }
-
-function renderHeatmap() {
-  const hm = document.getElementById("heatmap");
-  hm.innerHTML="";
-  const byDay={};
-  serverHistory.forEach(h=>{const d=h.time.split(" ")[0];if(!byDay[d])byDay[d]=[];byDay[d].push(h.emotion);});
-  for(let i=27;i>=0;i--){
-    const d=new Date();d.setDate(d.getDate()-i);
-    const key=d.toISOString().split("T")[0];
-    const entries=byDay[key]||[];
-    const dominant=entries.length?entries.sort((a,b)=>entries.filter(v=>v===b).length-entries.filter(v=>v===a).length)[0]:null;
-    const m=dominant?(emotions[dominant]||{emoji:"",color:"var(--input)"}):{emoji:"",color:"var(--input)"};
-    const label=d.toLocaleDateString("en",{month:"short",day:"numeric"});
-    hm.innerHTML+=`<div class="hm-day" style="background:${entries.length?m.color+"33":"var(--input)"};border-color:${entries.length?m.color:"var(--border)"}">${dominant?m.emoji:""}<span class="hm-tip">${label}${dominant?" · "+dominant:""}</span></div>`;
-  }
+function renderHeatmap(){
+  const hm=document.getElementById("heatmap");hm.innerHTML="";
+  const byDay={};serverHistory.forEach(h=>{const d=h.time.split(" ")[0];if(!byDay[d])byDay[d]=[];byDay[d].push(h.emotion);});
+  for(let i=27;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const key=d.toISOString().split("T")[0];const entries=byDay[key]||[];const dominant=entries.length?entries.sort((a,b)=>entries.filter(v=>v===b).length-entries.filter(v=>v===a).length)[0]:null;const m=dominant?(emotions[dominant]||{emoji:"",color:"var(--input)"}):{emoji:"",color:"var(--input)"};const label=d.toLocaleDateString("en",{month:"short",day:"numeric"});hm.innerHTML+=`<div class="hm-day" style="background:${entries.length?m.color+"33":"var(--input)"};border-color:${entries.length?m.color:"var(--border)"}">${dominant?m.emoji:""}<span class="hm-tip">${label}${dominant?" · "+dominant:""}</span></div>`;}
 }
-
-function renderHistoryTable() {
-  const tbody = document.getElementById("historyBody");
+function renderHistoryTable(){
+  const tbody=document.getElementById("historyBody");
   if(!serverHistory.length){tbody.innerHTML='<tr><td colspan="3" style="text-align:center;color:var(--sub);padding:20px">No history yet</td></tr>';return;}
-  tbody.innerHTML=serverHistory.map(h=>{
-    const m=emotions[h.emotion]||{emoji:"😶",color:"#fff"};
-    return `<tr><td><span class="tag" style="color:${m.color}">${m.emoji} ${h.emotion}</span></td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.text}</td><td style="color:var(--sub);white-space:nowrap">${h.time}</td></tr>`;
-  }).join("");
+  tbody.innerHTML=serverHistory.map(h=>{const m=emotions[h.emotion]||{emoji:"😶",color:"#fff"};return `<tr><td><span class="tag" style="color:${m.color}">${m.emoji} ${h.emotion}</span></td><td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.text}</td><td style="color:var(--sub);white-space:nowrap;font-size:.78rem">${h.time}</td></tr>`;}).join("");
 }
 
-function renderWellness() {
-  const neg = serverHistory.filter(h=>!emotions[h.emotion]?.positive).length;
-  const pos = serverHistory.length - neg;
-  const recent = serverHistory.slice(0,10).map(h=>h.emotion);
-  const negStreak=[];
-  for(const e of recent){if(!emotions[e]?.positive)negStreak.push(e);else break;}
-  const wc = document.getElementById("wellnessContent");
-  if(!serverHistory.length){wc.innerHTML='<p>Analyze some text to see your wellness report.</p>';return;}
-  if(negStreak.length>=3){
-    const dom=negStreak.sort((a,b)=>negStreak.filter(v=>v===b).length-negStreak.filter(v=>v===a).length)[0];
-    wc.innerHTML=`<div style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:14px;padding:16px"><div style="color:#f87171;font-weight:700;margin-bottom:8px">⚠️ ${negStreak.length} consecutive negative emotions detected</div><div style="font-size:.83rem;color:var(--sub)">Your recent entries show a pattern of ${dom}. Here are some tips:</div><div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">${(tips[dom]||tips.sadness).map(t=>`<div style="background:var(--input);border-left:3px solid #a78bfa;border-radius:8px;padding:8px 12px;font-size:.8rem">💡 ${t}</div>`).join("")}</div><div style="margin-top:10px;font-size:.75rem;color:var(--sub)">If you're struggling: <a href="https://www.crisistextline.org" target="_blank" style="color:#a78bfa">Crisis Text Line</a></div></div>`;
-  } else {
-    wc.innerHTML=`<div style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:14px;padding:14px;color:#4ade80;font-size:.85rem">✅ You're doing well! Keep it up.</div>`;
-  }
-  if(wellnessChart) wellnessChart.destroy();
-  wellnessChart=new Chart(document.getElementById("wellnessChart"),{type:"doughnut",data:{labels:["Positive","Negative"],datasets:[{data:[pos,neg],backgroundColor:["#4ade80","#f87171"],borderWidth:0}]},options:{plugins:{legend:{labels:{color:"rgba(255,255,255,.6)"}}},cutout:"60%"}});
-  const dt=document.getElementById("dailyTips");
-  const allTips=[...tips.sadness,...tips.anger,...tips.fear].sort(()=>Math.random()-.5).slice(0,4);
-  dt.innerHTML=allTips.map(t=>`<div style="background:var(--input);border-left:3px solid #a78bfa;border-radius:10px;padding:10px 14px;font-size:.82rem">💡 ${t}</div>`).join("");
+// ── Rewrite ───────────────────────────────────────────────────────────────────
+async function doRewrite(){
+  const text=document.getElementById("rewriteText").value.trim();if(!text)return;
+  const res=await fetch("/rewrite",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
+  const data=await res.json();const m=emotions[data.emotion]||{emoji:"🤔",color:"#fff"};
+  document.getElementById("rewriteEmoji").textContent=m.emoji;
+  document.getElementById("rewriteEmotion").textContent=data.emotion;
+  document.getElementById("rewriteEmotion").style.color=m.color;
+  document.getElementById("rewriteSuggestions").innerHTML=(data.suggestions||[]).map(s=>`<div class="suggestion-item">💡 ${s}</div>`).join("");
+  document.getElementById("rewriteResult").style.display="block";
 }
+
+// ── Compare ───────────────────────────────────────────────────────────────────
+async function doCompare(){
+  const t1=document.getElementById("compareText1").value.trim(),t2=document.getElementById("compareText2").value.trim();
+  if(!t1||!t2)return;
+  const res=await fetch("/compare",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text1:t1,text2:t2})});
+  const data=await res.json();
+  const m1=emotions[data.text1.emotion]||{emoji:"🤔",color:"#fff"},m2=emotions[data.text2.emotion]||{emoji:"🤔",color:"#fff"};
+  document.getElementById("cmpEmoji1").textContent=m1.emoji;document.getElementById("cmpEmotion1").textContent=data.text1.emotion;document.getElementById("cmpEmotion1").style.color=m1.color;
+  document.getElementById("cmpEmoji2").textContent=m2.emoji;document.getElementById("cmpEmotion2").textContent=data.text2.emotion;document.getElementById("cmpEmotion2").style.color=m2.color;
+  const same=data.text1.emotion===data.text2.emotion;
+  document.getElementById("cmpInsight").textContent=same?`Both texts share the same emotion: ${data.text1.emotion}.`:`Text A feels ${data.text1.emotion} while Text B feels ${data.text2.emotion}. ${m1.positive===m2.positive?"Both have similar emotional polarity.":"They have opposite emotional polarity."}`;
+  document.getElementById("compareResult").style.display="block";
+}
+
+// ── Bulk ──────────────────────────────────────────────────────────────────────
+async function doBulk(input){
+  const file=input.files[0];if(!file)return;
+  const form=new FormData();form.append("file",file);
+  const res=await fetch("/bulk",{method:"POST",body:form});
+  bulkResults=await res.json();
+  const tbody=document.getElementById("bulkBody");
+  tbody.innerHTML=bulkResults.map((r,i)=>{const m=emotions[r.emotion]||{emoji:"😶",color:"#fff"};return `<tr><td style="color:var(--sub)">${i+1}</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.text}</td><td><span class="tag" style="color:${m.color}">${m.emoji} ${r.emotion}</span></td><td style="color:var(--sub)">${r.top_confidence}%</td></tr>`;}).join("");
+  document.getElementById("bulkResult").style.display="block";
+}
+function downloadBulk(){
+  if(!bulkResults.length)return;
+  const csv=["text,emotion,confidence",...bulkResults.map(r=>`"${r.text.replace(/"/g,'""')}",${r.emotion},${r.top_confidence}`)].join("\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="bulk_results.csv";a.click();
+}
+
+// ── Journal ───────────────────────────────────────────────────────────────────
+async function saveJournal(){
+  const entry=document.getElementById("journalText").value.trim();if(!entry)return;
+  const res=await fetch("/journal",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({entry})});
+  const data=await res.json();const m=emotions[data.emotion]||{emoji:"🤔",color:"#fff"};
+  document.getElementById("journalEmoji").textContent=m.emoji;
+  document.getElementById("journalEmotion").textContent=data.emotion;document.getElementById("journalEmotion").style.color=m.color;
+  document.getElementById("journalResult").style.display="block";
+  document.getElementById("journalText").value="";
+  loadJournal();
+}
+async function loadJournal(){
+  const res=await fetch("/journal");const entries=await res.json();
+  const list=document.getElementById("journalList");
+  if(!entries.length){list.innerHTML='<div style="color:var(--sub);font-size:.82rem;text-align:center;padding:14px">No entries yet</div>';return;}
+  list.innerHTML=entries.map(e=>{const m=emotions[e.emotion]||{emoji:"😶",color:"#fff"};return `<div class="journal-entry"><div style="font-size:.85rem">${e.entry}</div><div class="journal-meta">${m.emoji} <span style="color:${m.color};text-transform:capitalize">${e.emotion}</span> · ${e.date}</div></div>`;}).join("");
+}
+
+// ── Wellness ──────────────────────────────────────────────────────────────────
+function renderWellness(){
+  const neg=serverHistory.filter(h=>!emotions[h.emotion]?.positive).length,pos=serverHistory.length-neg;
+  const recent=serverHistory.slice(0,10).map(h=>h.emotion);
+  const negStreak=[];for(const e of recent){if(!emotions[e]?.positive)negStreak.push(e);else break;}
+  const wc=document.getElementById("wellnessContent");
+  if(!serverHistory.length){wc.innerHTML='<p>Analyze some text to see your wellness report.</p>';return;}
+  if(negStreak.length>=3){const dom=negStreak.sort((a,b)=>negStreak.filter(v=>v===b).length-negStreak.filter(v=>v===a).length)[0];wc.innerHTML=`<div style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:12px;padding:14px"><div style="color:#f87171;font-weight:700;margin-bottom:8px">⚠️ ${negStreak.length} consecutive negative emotions detected</div><div style="font-size:.82rem;color:var(--sub)">Your recent entries show a pattern of ${dom}. Here are some tips:</div><div style="margin-top:10px;display:flex;flex-direction:column;gap:7px">${(tips[dom]||tips.sadness).map(t=>`<div style="background:var(--input);border-left:3px solid #a78bfa;border-radius:0 8px 8px 0;padding:8px 12px;font-size:.8rem">💡 ${t}</div>`).join("")}</div><div style="margin-top:10px;font-size:.75rem;color:var(--sub)">Need help? <a href="https://www.crisistextline.org" target="_blank" style="color:#a78bfa">Crisis Text Line</a></div></div>`;}
+  else{wc.innerHTML=`<div style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:12px;padding:12px;color:#4ade80;font-size:.84rem">✅ You're doing well! Keep it up.</div>`;}
+  if(wellnessChart)wellnessChart.destroy();
+  wellnessChart=new Chart(document.getElementById("wellnessChart"),{type:"doughnut",data:{labels:["Positive","Negative"],datasets:[{data:[pos,neg],backgroundColor:["#4ade80","#f87171"],borderWidth:0}]},options:{plugins:{legend:{labels:{color:"rgba(255,255,255,.6)"}}},cutout:"60%"}});
+  const allTips=[...tips.sadness,...tips.anger,...tips.fear].sort(()=>Math.random()-.5).slice(0,4);
+  document.getElementById("dailyTips").innerHTML=allTips.map(t=>`<div style="background:var(--input);border-left:3px solid #a78bfa;border-radius:0 10px 10px 0;padding:9px 12px;font-size:.8rem">💡 ${t}</div>`).join("");
+}
+
+// ── Leaderboard ───────────────────────────────────────────────────────────────
+async function loadLeaderboard(){
+  const res=await fetch("/leaderboard");const board=await res.json();
+  const el=document.getElementById("leaderboardList");
+  if(!board.length){el.innerHTML='<div style="color:var(--sub);font-size:.82rem;text-align:center;padding:20px">No joy detected today yet. Be the first! 😄</div>';return;}
+  const medals=["🥇","🥈","🥉"];
+  el.innerHTML=board.map((b,i)=>`<div class="leaderboard-item"><div class="lb-rank">${medals[i]||i+1}</div><div class="lb-name">${b.user}</div><div class="lb-score">😄 ${b.joy_count}</div></div>`).join("");
+}
+
+// ── API Key ───────────────────────────────────────────────────────────────────
+async function loadApiKey(){const res=await fetch("/apikey");const data=await res.json();document.getElementById("apiKeyBox").textContent=data.api_key;}
+function copyApiKey(){const key=document.getElementById("apiKeyBox").textContent;navigator.clipboard.writeText(key);alert("API key copied!");}
+async function regenApiKey(){if(!confirm("Regenerate API key? Old key will stop working."))return;const res=await fetch("/apikey/regenerate",{method:"POST"});const data=await res.json();document.getElementById("apiKeyBox").textContent=data.api_key;}
 
 // ── Voice ─────────────────────────────────────────────────────────────────────
-function toggleMic(){
-  if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){alert("Voice input not supported. Try Chrome.");return;}
-  if(isRecording){recognition.stop();return;}
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  recognition=new SR();recognition.lang="en-US";recognition.interimResults=true;
-  recognition.onstart=()=>{isRecording=true;document.getElementById("micBtn").textContent="🔴";};
-  recognition.onresult=e=>{document.getElementById("inputText").value=Array.from(e.results).map(r=>r[0].transcript).join("");};
-  recognition.onend=()=>{isRecording=false;document.getElementById("micBtn").textContent="🎤";};
-  recognition.start();
-}
+function toggleMic(){if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){alert("Voice input not supported. Try Chrome.");return;}if(isRecording){recognition.stop();return;}const SR=window.SpeechRecognition||window.webkitSpeechRecognition;recognition=new SR();recognition.lang="en-US";recognition.interimResults=true;recognition.onstart=()=>{isRecording=true;document.getElementById("micBtn").textContent="🔴";};recognition.onresult=e=>{document.getElementById("inputText").value=Array.from(e.results).map(r=>r[0].transcript).join("");};recognition.onend=()=>{isRecording=false;document.getElementById("micBtn").textContent="🎤";};recognition.start();}
 
 // ── Actions ───────────────────────────────────────────────────────────────────
 function copyResult(){if(!lastResult)return;navigator.clipboard.writeText(`"${lastResult.text}" → ${lastResult.meta.emoji} ${lastResult.emotion}`);alert("Copied!");}
 function downloadResult(){if(!lastResult)return;const b=new Blob([`Text: ${lastResult.text}\nEmotion: ${lastResult.emotion} ${lastResult.meta.emoji}\nDate: ${new Date().toLocaleString()}`],{type:"text/plain"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="emotion-result.txt";a.click();}
-function shareResult(){if(!lastResult)return;const t=`Emotion detected: "${lastResult.text}" → ${lastResult.meta.emoji} ${lastResult.emotion}`;if(navigator.share)navigator.share({title:"EmotionAI",text:t,url:location.href});else{navigator.clipboard.writeText(t);alert("Copied!");}}
+function shareResult(){if(!lastResult)return;const t=`Emotion: "${lastResult.text}" → ${lastResult.meta.emoji} ${lastResult.emotion}`;if(navigator.share)navigator.share({title:"EmotionAI",text:t,url:location.href});else{navigator.clipboard.writeText(t);alert("Copied!");}}
 function toggleTheme(){const h=document.documentElement;h.setAttribute("data-theme",h.getAttribute("data-theme")==="dark"?"light":"dark");}
 
 document.getElementById("inputText").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();analyze();}});
 </script>
-</body>
-</html>
+</body></html>
