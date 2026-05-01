@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session, Response
 from werkzeug.security import generate_password_hash, check_password_hash
-import pickle, json, os, numpy as np, csv, io, secrets
+import pickle, json, os, numpy as np, csv, io, secrets, re
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
@@ -22,12 +22,35 @@ def save_users(u):
     with open(USERS_FILE, "w") as f: json.dump(u, f)
 
 def predict_text(text):
-    vec    = vectorizer.transform([text])
-    emotion = model.predict(vec)[0]
+    vec     = vectorizer.transform([text])
     scores  = model.decision_function(vec)[0]
     e       = np.exp(scores - scores.max())
     probs   = e / e.sum()
     confidence = {c: round(float(p)*100, 1) for c, p in zip(model.classes_, probs)}
+
+    # ── Mixed emotion override ────────────────────────────────────────────────
+    # When text has strong positive words alongside negative ones,
+    # boost the positive signal so it isn't drowned out by single negative words.
+    POSITIVE_WORDS = {"happy","happiness","joy","joyful","excited","love","great",
+                      "amazing","wonderful","fantastic","glad","pleased","delighted",
+                      "awesome","good","excellent","thrilled","blessed","grateful",
+                      "cheerful","elated","ecstatic","proud","enjoy","enjoyed"}
+    NEGATIVE_WORDS = {"sad","sadness","unhappy","depressed","miserable","terrible",
+                      "awful","horrible","hate","angry","fear","scared","shame",
+                      "disgusted","worried","anxious","upset","hurt","pain","cry"}
+
+    words = set(re.findall(r"[a-z']+", text.lower()))
+    pos_hits = len(words & POSITIVE_WORDS)
+    neg_hits = len(words & NEGATIVE_WORDS)
+
+    # If positive words dominate or tie, lean toward joy
+    if pos_hits > 0 and pos_hits >= neg_hits:
+        emotion = "joy"
+    elif neg_hits > pos_hits and neg_hits >= 1:
+        emotion = model.predict(vec)[0]
+    else:
+        emotion = model.predict(vec)[0]
+
     return emotion, confidence
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
